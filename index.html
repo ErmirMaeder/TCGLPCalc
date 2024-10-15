@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCG LP Rechner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="title-container">
+        <span class="title red">Yu-Gi-Oh!</span>
+        <br>
+        <span class="title blue">LP RECHNER</span>
+    </div>
+    <div class="container">
+        <div class="player player1">
+            <div class="lp-display" id="lp1">8000</div>
+            <button onclick="openModal(1)">LP Abziehen</button>
+        </div>
+        
+        <div class="player player2">
+            <div class="lp-display" id="lp2">8000</div>
+            <button onclick="openModal(2)">LP Abziehen</button>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <input type="number" id="lpInput" placeholder="LP Abziehen" min="0">
+            <button onclick="updateLP()">OK</button>
+            <button onclick="closeModal()">Abbrechen</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

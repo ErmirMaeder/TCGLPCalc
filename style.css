@@ -1,0 +1,105 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: url('dein-bild.jpg'); /* Pfad zu deinem Hintergrundbild */
+    background-size: cover; /* Bild deckt den gesamten Bildschirm ab */
+    background-position: center; /* Bild ist zentriert */
+}
+
+.title-container {
+    text-align: center;
+    margin-bottom: 30px; /* Beibehaltung des unteren Abstands */
+    margin-top: -100px;    /* Erhöhen des Abstands oben */
+}
+
+.title {
+    font-family: 'Arial', sans-serif;
+    font-size: 48px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.red {
+    margin-left: 50px;
+    color: darkgoldenrod /* Leuchtendes Rot */
+}
+
+.blue {
+    color: black; /* Leuchtendes Blau */
+    text-shadow: 0 0 15px rgba(76, 140, 255, 0.8);
+}
+
+.container {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 800px; /* Maximalbreite für Desktop */
+    margin: 0 auto;
+}
+
+.player {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.8); /* Weiß mit Transparenz */
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.player.player2 {
+    transform: rotate(180deg); /* Dreht den Inhalt um 180 Grad */
+    transform-origin: center; /* Setzt den Ursprung der Drehung in die Mitte */
+}
+
+.lp-display {
+    font-size: 36px;
+    margin: 10px 0;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #3498db; /* Button-Hintergrundfarbe */
+    color: white; /* Button-Textfarbe */
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #2980b9; /* Button-Hover-Farbe */
+}
+
+.modal {
+    display: none; /* Modal standardmäßig versteckt */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Dunkler Hintergrund */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content input {
+    padding: 10px;
+    width: 60%;
+    margin-bottom: 10px;
+}
