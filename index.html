@@ -503,6 +503,8 @@
 </style>
 </head>
 <body>
+<!-- ►► HIER EIGENE AUDIODATEI EINTRAGEN: Pfad in src="..." anpassen ◄◄ -->
+<audio id="bgMusic" src="39. Free Duel.mp3" loop preload="auto"></audio>
 <div id="intro">
   <div class="intro-stage">
     <div class="intro-ring r1"></div>
@@ -543,6 +545,7 @@
 
   <div class="center-divider"></div>
   <div class="center-controls">
+    <div class="icon-btn" id="musicBtn" title="Musik an/aus">🔈</div>
     <div class="icon-btn" id="diceBtn" title="Würfeln">🎲</div>
     <div class="icon-btn" id="coinBtn" title="Münzwurf">🪙</div>
     <div class="icon-btn" id="swapBtn" title="Beide LP halbieren">⇅</div>
@@ -725,6 +728,69 @@
       requestWakeLock();
     }
   });
+
+  // Zusätzliche Absicherung, v.a. für iOS-Homescreen-Apps (Standalone-Modus),
+  // wo Wake-Lock-API und Canvas-Stream-Tricks bekanntermaßen unzuverlässig sind:
+  // ein winziges, selbst erzeugtes (schwarzes, 1 Sekunde langes) Video, das
+  // endlos in Schleife "abspielt" — der klassische, robusteste No-Sleep-Trick.
+  // Komplett eigenes Material, keine externe Datei, keine Internetabfrage.
+  const NOSLEEP_VIDEO_BASE64 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMXbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAA+gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAkF0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAA+gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAIAAAACAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAPoAAAAAAABAAAAAAG5bWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAQABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABZG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAASRzdGJsAAAAwHN0c2QAAAAAAAAAAQAAALBhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAIAAgBIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAANmF2Y0MBZAAK/+EAGWdkAAqs2V+IiMBEAAADAAQAAAMACDxIllgBAAZo6+PLIsD9+PgAAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAAAFigAABYoAAAAGHN0dHMAAAAAAAAAAQAAAAEAAEAAAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAABRzdHN6AAAAAAAAAsUAAAABAAAAFHN0Y28AAAAAAAAAAQAAA0cAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjYwLjE2LjEwMAAAAAhmcmVlAAACzW1kYXQAAAKtBgX//6ncRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTY0IHIzMTA4IDMxZTE5ZjkgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDIzIC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MSByZWY9MyBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgzOjB4MTEzIG1lPWhleCBzdWJtZT03IHBzeT0xIHBzeV9yZD0xLjAwOjAuMDAgbWl4ZWRfcmVmPTEgbWVfcmFuZ2U9MTYgY2hyb21hX21lPTEgdHJlbGxpcz0xIDh4OGRjdD0xIGNxbT0wIGRlYWR6b25lPTIxLDExIGZhc3RfcHNraXA9MSBjaHJvbWFfcXBfb2Zmc2V0PS0yIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTMgYl9weXJhbWlkPTIgYl9hZGFwdD0xIGJfYmlhcz0wIGRpcmVjdD0xIHdlaWdodGI9MSBvcGVuX2dvcD0wIHdlaWdodHA9MiBrZXlpbnQ9MjUwIGtleWludF9taW49MSBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTQwIHJjPWNyZiBtYnRyZWU9MSBjcmY9MjMuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAABBliIQAFf/+98nvwKbr29+B';
+
+  function setupNoSleepVideo(){
+    try{
+      const video = document.createElement('video');
+      video.muted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('loop', '');
+      video.loop = true;
+      video.setAttribute('autoplay', '');
+      video.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;';
+      video.src = NOSLEEP_VIDEO_BASE64;
+      document.body.appendChild(video);
+
+      const tryPlay = ()=> video.play().catch(()=>{});
+      tryPlay();
+      document.addEventListener('click', tryPlay, {passive: true});
+      document.addEventListener('touchstart', tryPlay, {passive: true});
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.visibilityState === 'visible') tryPlay();
+      });
+      // Manche iOS-Versionen pausieren das Video trotz loop-Attribut kurz beim Ende
+      video.addEventListener('ended', tryPlay);
+    }catch(err){
+      // Fallback nicht verfügbar — Wake Lock API (falls unterstützt) läuft trotzdem separat weiter
+    }
+  }
+  setupNoSleepVideo();
+
+  // Hintergrundmusik über die eigene Audiodatei (siehe <audio id="bgMusic"> oben im <body>)
+  const bgMusic = document.getElementById('bgMusic');
+  let musicMuted = false;
+
+  function toggleMusicMute(){
+    musicMuted = !musicMuted;
+    if(musicMuted){
+      bgMusic.pause();
+    } else {
+      bgMusic.play().catch(()=>{});
+    }
+    const btn = document.getElementById('musicBtn');
+    if(btn) btn.textContent = musicMuted ? '🔇' : '🔈';
+  }
+
+  document.getElementById('musicBtn').addEventListener('click', toggleMusicMute);
+
+  // Browser verlangen eine Nutzer-Interaktion, bevor Audio starten darf —
+  // bei der ersten Berührung/Klick auf die Seite automatisch starten.
+  function musicOnFirstGesture(){
+    if(!musicMuted) bgMusic.play().catch(()=>{});
+    document.removeEventListener('click', musicOnFirstGesture);
+    document.removeEventListener('touchstart', musicOnFirstGesture);
+  }
+  document.addEventListener('click', musicOnFirstGesture);
+  document.addEventListener('touchstart', musicOnFirstGesture);
 
   // Fix for mobile browser dynamic viewport height (address bar show/hide)
   function setVh(){
