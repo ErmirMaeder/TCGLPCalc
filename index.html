@@ -232,19 +232,22 @@
     margin-top:2px;
     z-index:2;
   }
-  .custom-input{
+  .custom-trigger{
     flex:1;
-    min-width:0;
-    background:#0c0f16;
-    border:1px solid var(--line);
+    padding:clamp(6px, 1.6vh, 8px) 0;
     clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    border:1px solid var(--line);
+    background:#0c0f16;
     color:var(--ink);
     font-family:'Rajdhani', sans-serif;
+    font-weight:700;
     font-size:clamp(12px, 2.8vw, 15px);
-    text-align:center;
-    padding:clamp(6px, 1.6vh, 8px) 0;
-    outline:none;
+    cursor:pointer;
   }
+  .red .custom-trigger{ border-color:var(--red); color:var(--red); }
+  .blue .custom-trigger{ border-color:var(--blue); color:var(--blue); }
+  .red .custom-trigger:active{ background:var(--red-dim); }
+  .blue .custom-trigger:active{ background:var(--blue-dim); }
   .custom-btn{
     padding:clamp(6px, 1.6vh, 8px) clamp(10px, 3vw, 16px);
     clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
@@ -254,11 +257,8 @@
     font-weight:700;
     cursor:pointer;
     font-size:clamp(13px, 2.8vw, 16px);
+    font-family:'Rajdhani', sans-serif;
   }
-  .red .custom-btn{ border-color:var(--red); color:var(--red); }
-  .blue .custom-btn{ border-color:var(--blue); color:var(--blue); }
-  .red .custom-btn:active{ background:var(--red-dim); }
-  .blue .custom-btn:active{ background:var(--blue-dim); }
 
   /* Very short viewports (landscape phones): trim vertical rhythm and shrink secondary controls */
   @media (max-height: 460px){
@@ -354,6 +354,39 @@
   .coin-front{ background:radial-gradient(circle at 32% 30%, #fff6d8, var(--red)); color:#3a0d12; }
   .coin-back{ background:radial-gradient(circle at 32% 30%, #eaf6ff, var(--blue)); color:#08243f; transform:rotateY(180deg); }
   .panel-actions .roll-again{ border-color:#fff; color:#fff; }
+
+  .keypad-panel{ transition:transform 0.25s ease; }
+  .keypad-panel.flipped{ transform:rotate(180deg); }
+  .keypad-display{
+    font-family:'Orbitron', sans-serif;
+    font-size:clamp(28px, 8vw, 40px);
+    font-weight:700;
+    color:#fff;
+    background:#0c0f16;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 0;
+    margin-bottom:14px;
+    letter-spacing:1px;
+  }
+  .keypad-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .keypad-key{
+    padding:14px 0;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#0c0f16;
+    color:#fff;
+    font-family:'Orbitron', sans-serif;
+    font-size:18px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .keypad-key:active{ background:rgba(255,255,255,0.1); }
 
   @media (prefers-reduced-motion: reduce){
     .lp-display, .bar-fill{ transition:none; }
@@ -499,9 +532,7 @@
       <div class="chip plus" data-p="top" data-d="50">+50</div>
     </div>
     <div class="custom-row">
-      <input class="custom-input" id="customTop" type="number" placeholder="eigener Wert" inputmode="numeric">
-      <button class="custom-btn" data-p="top" data-mode="minus">−</button>
-      <button class="custom-btn" data-p="top" data-mode="plus">+</button>
+      <button class="custom-trigger" data-p="top">🔢 Eigener Wert</button>
     </div>
   </div>
 
@@ -530,9 +561,7 @@
       <div class="chip plus" data-p="bottom" data-d="50">+50</div>
     </div>
     <div class="custom-row">
-      <input class="custom-input" id="customBottom" type="number" placeholder="eigener Wert" inputmode="numeric">
-      <button class="custom-btn" data-p="bottom" data-mode="minus">−</button>
-      <button class="custom-btn" data-p="bottom" data-mode="plus">+</button>
+      <button class="custom-trigger" data-p="bottom">🔢 Eigener Wert</button>
     </div>
   </div>
 
@@ -576,6 +605,34 @@
       <div class="panel-actions">
         <button class="custom-btn" id="closeCoin">Schließen</button>
         <button class="custom-btn roll-again" id="flipAgain">Nochmal werfen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="keypadOverlay">
+    <div class="panel keypad-panel" id="keypadPanel">
+      <h2 id="keypadTitle">Eigener Wert</h2>
+      <div class="keypad-display" id="keypadDisplay">0</div>
+      <div class="keypad-grid">
+        <button class="keypad-key" data-k="1">1</button>
+        <button class="keypad-key" data-k="2">2</button>
+        <button class="keypad-key" data-k="3">3</button>
+        <button class="keypad-key" data-k="4">4</button>
+        <button class="keypad-key" data-k="5">5</button>
+        <button class="keypad-key" data-k="6">6</button>
+        <button class="keypad-key" data-k="7">7</button>
+        <button class="keypad-key" data-k="8">8</button>
+        <button class="keypad-key" data-k="9">9</button>
+        <button class="keypad-key" id="keypadClear">C</button>
+        <button class="keypad-key" data-k="0">0</button>
+        <button class="keypad-key" id="keypadBack">⌫</button>
+      </div>
+      <div class="panel-actions">
+        <button class="custom-btn" id="keypadMinus" style="border-color:var(--red); color:var(--red);">− Abziehen</button>
+        <button class="custom-btn" id="keypadPlus" style="border-color:var(--blue); color:var(--blue);">+ Hinzufügen</button>
+      </div>
+      <div class="panel-actions" style="margin-top:8px;">
+        <button class="custom-btn" id="keypadCancel">Abbrechen</button>
       </div>
     </div>
   </div>
@@ -632,6 +689,24 @@
     intro.addEventListener('click', dismiss);
   })();
 
+  // Bildschirm-Sperre verhindern, solange die App aktiv ist
+  let wakeLock = null;
+  async function requestWakeLock(){
+    try{
+      if('wakeLock' in navigator){
+        wakeLock = await navigator.wakeLock.request('screen');
+      }
+    }catch(err){
+      // Wake Lock nicht verfügbar (z.B. Browser-Unterstützung fehlt) — App läuft trotzdem normal weiter
+    }
+  }
+  requestWakeLock();
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'visible'){
+      requestWakeLock();
+    }
+  });
+
   // Fix for mobile browser dynamic viewport height (address bar show/hide)
   function setVh(){
     document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
@@ -674,16 +749,55 @@
     });
   });
 
-  document.querySelectorAll('.custom-btn[data-p]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const p = btn.dataset.p;
-      const input = document.getElementById(p === 'top' ? 'customTop' : 'customBottom');
-      const raw = parseInt(input.value, 10);
-      if(isNaN(raw) || raw <= 0) return;
-      bump(p, btn.dataset.mode === 'minus' ? -raw : raw);
-      input.value = '';
+  document.querySelectorAll('.custom-trigger[data-p]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openKeypad(btn.dataset.p));
+  });
+
+  const keypadOverlay = document.getElementById('keypadOverlay');
+  const keypadPanel = document.getElementById('keypadPanel');
+  const keypadTitle = document.getElementById('keypadTitle');
+  const keypadDisplay = document.getElementById('keypadDisplay');
+  let keypadValue = '';
+  let keypadPlayer = null;
+
+  function openKeypad(p){
+    keypadPlayer = p;
+    keypadValue = '';
+    keypadDisplay.textContent = '0';
+    const playerName = document.getElementById(p === 'top' ? 'nameTop' : 'nameBottom').value || (p === 'top' ? 'Spieler 1' : 'Spieler 2');
+    keypadTitle.textContent = 'Eigener Wert — ' + playerName;
+    keypadPanel.classList.toggle('flipped', p === 'top');
+    keypadOverlay.classList.add('show');
+  }
+  function closeKeypad(){
+    keypadOverlay.classList.remove('show');
+    keypadPlayer = null;
+  }
+  document.querySelectorAll('.keypad-key[data-k]').forEach(key=>{
+    key.addEventListener('click', ()=>{
+      if(keypadValue.length >= 6) return;
+      keypadValue += key.dataset.k;
+      keypadDisplay.textContent = keypadValue.replace(/^0+(?=\d)/, '');
     });
   });
+  document.getElementById('keypadClear').addEventListener('click', ()=>{
+    keypadValue = '';
+    keypadDisplay.textContent = '0';
+  });
+  document.getElementById('keypadBack').addEventListener('click', ()=>{
+    keypadValue = keypadValue.slice(0, -1);
+    keypadDisplay.textContent = keypadValue === '' ? '0' : keypadValue;
+  });
+  function applyKeypad(sign){
+    const raw = parseInt(keypadValue, 10);
+    if(!isNaN(raw) && raw > 0 && keypadPlayer){
+      bump(keypadPlayer, sign * raw);
+    }
+    closeKeypad();
+  }
+  document.getElementById('keypadPlus').addEventListener('click', ()=> applyKeypad(1));
+  document.getElementById('keypadMinus').addEventListener('click', ()=> applyKeypad(-1));
+  document.getElementById('keypadCancel').addEventListener('click', closeKeypad);
 
   const overlay = document.getElementById('resetOverlay');
   document.getElementById('resetBtn').addEventListener('click', ()=> overlay.classList.add('show'));
