@@ -393,23 +393,8 @@
   }
   .keypad-key:active{ background:rgba(255,255,255,0.1); }
 
-  .wake-control{
-    position:fixed;
-    right:max(12px, env(safe-area-inset-right));
-    bottom:max(12px, env(safe-area-inset-bottom));
-    z-index:40;
-    border:1px solid var(--blue);
-    background:rgba(5,7,13,0.92);
-    color:var(--ink);
-    border-radius:999px;
-    padding:9px 12px;
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:13px;
-    box-shadow:0 0 16px rgba(47,168,255,0.25);
-  }
-  .wake-control.active{ border-color:#54e38e; }
-  .wake-control.error{ border-color:var(--red); }
+  .icon-btn.active{ border-color:#54e38e; box-shadow:0 0 10px rgba(84,227,142,0.4); }
+  .icon-btn.error{ border-color:var(--red); box-shadow:0 0 10px rgba(255,59,74,0.4); }
 
   @media (prefers-reduced-motion: reduce){
     .lp-display, .bar-fill{ transition:none; }
@@ -522,7 +507,7 @@
 </head>
 <body>
 <!-- ►► HIER EIGENE AUDIODATEI EINTRAGEN: Pfad in src="..." anpassen ◄◄ -->
-<audio id="bgMusic" src="39. Free Duel.mp3" loop preload="auto"></audio>
+<audio id="bgMusic" src="letsduel.mp3" loop preload="auto"></audio>
 <div id="intro">
   <div class="intro-stage">
     <div class="intro-ring r1"></div>
@@ -537,7 +522,6 @@
   <div class="intro-bar-track"><div class="intro-bar-fill"></div></div>
   <div class="intro-skip">Tippen, um zu überspringen</div>
 </div>
-<button class="wake-control" id="wakeBtn" type="button">☀ Bildschirm an</button>
 <div class="app">
 
 
@@ -564,7 +548,8 @@
 
   <div class="center-divider"></div>
   <div class="center-controls">
-    <div class="icon-btn" id="musicBtn" title="Musik an/aus">🔈</div>
+    <div class="icon-btn" id="wakeBtn" title="Bildschirm an/aus">☀</div>
+    <div class="icon-btn" id="musicBtn" title="Musik an/aus">🔇</div>
     <div class="icon-btn" id="diceBtn" title="Würfeln">🎲</div>
     <div class="icon-btn" id="coinBtn" title="Münzwurf">🪙</div>
     <div class="icon-btn" id="swapBtn" title="Beide LP halbieren">⇅</div>
@@ -716,62 +701,124 @@
     intro.addEventListener('click', dismiss);
   })();
 
-  // Bildschirm aktiv halten. Auf iOS muss die Anfrage zuverlässig aus einer
-  // echten Nutzeraktion kommen; deshalb gibt es zusätzlich einen sichtbaren Button.
+  // Bildschirm-Sperre verhindern, solange die App aktiv ist — über einen
+  // sichtbaren Button, der eine echte Nutzeraktion auslöst (auf iOS am
+  // zuverlässigsten) und sich auch wieder deaktivieren lässt.
   let wakeLock = null;
+  let wakeDesired = false; // true = Nutzer hat den Button aktiv angeschaltet
+  const wakeLockSupported = 'wakeLock' in navigator;
   const wakeBtn = document.getElementById('wakeBtn');
 
-  function setWakeStatus(state, text){
+  function setWakeStatus(state, icon){
     wakeBtn.classList.toggle('active', state === 'active');
     wakeBtn.classList.toggle('error', state === 'error');
-    wakeBtn.textContent = text;
+    wakeBtn.textContent = icon;
   }
 
   async function requestWakeLock(){
-    if(!('wakeLock' in navigator)){
-      setWakeStatus('error', '⚠ Auto-Lock ausschalten');
+    if(!wakeLockSupported){
+      setWakeStatus('error', '⚠');
       return false;
     }
     try{
       if(wakeLock && !wakeLock.released) return true;
       wakeLock = await navigator.wakeLock.request('screen');
-      setWakeStatus('active', '☀ Bildschirm bleibt an');
+      setWakeStatus('active', '☀');
       wakeLock.addEventListener('release', ()=>{
         wakeLock = null;
-        setWakeStatus('', '☀ Bildschirm an');
+        if(wakeDesired) setWakeStatus('error', '⚠');
+        else setWakeStatus('', '☀');
       });
       return true;
     }catch(err){
       wakeLock = null;
-      setWakeStatus('error', '⚠ Erneut tippen');
+      setWakeStatus('error', '⚠');
       return false;
     }
   }
 
-  wakeBtn.addEventListener('click', requestWakeLock);
-
-  // Erste Berührung als Nutzeraktion nutzen. Der sichtbare Button bleibt als
-  // manueller Fallback erhalten, falls iOS die erste Anfrage ablehnt.
-  function wakeLockOnFirstGesture(){
-    requestWakeLock();
-    document.removeEventListener('pointerdown', wakeLockOnFirstGesture);
+  async function releaseWakeLock(){
+    if(wakeLock){
+      try{ await wakeLock.release(); }catch(e){}
+      wakeLock = null;
+    }
+    setWakeStatus('', '☀');
   }
-  document.addEventListener('pointerdown', wakeLockOnFirstGesture, {passive:true});
 
-  // Nach App-Wechsel oder Entsperren muss der Wake Lock neu angefordert werden.
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState === 'visible') requestWakeLock();
+  wakeBtn.addEventListener('click', ()=>{
+    if(wakeDesired){
+      wakeDesired = false;
+      releaseWakeLock();
+    } else {
+      wakeDesired = true;
+      requestWakeLock();
+    }
   });
 
+  // Nach App-Wechsel oder Entsperren muss der Wake Lock neu angefordert werden —
+  // aber nur, wenn der Nutzer ihn aktiv eingeschaltet hatte.
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'visible' && wakeDesired && !wakeLock){
+      requestWakeLock();
+    }
+  });
+
+  // Zusätzliche Absicherung, v.a. für iOS-Homescreen-Apps (Standalone-Modus),
+  // wo Wake-Lock-API und Canvas-Stream-Tricks bekanntermaßen unzuverlässig sind:
+  // ein winziges, selbst erzeugtes (schwarzes, 1 Sekunde langes) Video, das
+  // endlos in Schleife "abspielt" — der klassische, robusteste No-Sleep-Trick.
+  // Komplett eigenes Material, keine externe Datei, keine Internetabfrage.
+  const NOSLEEP_VIDEO_BASE64 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMXbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAA+gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAkF0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAA+gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAIAAAACAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAPoAAAAAAABAAAAAAG5bWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAQABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABZG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAASRzdGJsAAAAwHN0c2QAAAAAAAAAAQAAALBhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAIAAgBIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAANmF2Y0MBZAAK/+EAGWdkAAqs2V+IiMBEAAADAAQAAAMACDxIllgBAAZo6+PLIsD9+PgAAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAAAFigAABYoAAAAGHN0dHMAAAAAAAAAAQAAAAEAAEAAAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAABRzdHN6AAAAAAAAAsUAAAABAAAAFHN0Y28AAAAAAAAAAQAAA0cAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjYwLjE2LjEwMAAAAAhmcmVlAAACzW1kYXQAAAKtBgX//6ncRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTY0IHIzMTA4IDMxZTE5ZjkgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDIzIC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MSByZWY9MyBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgzOjB4MTEzIG1lPWhleCBzdWJtZT03IHBzeT0xIHBzeV9yZD0xLjAwOjAuMDAgbWl4ZWRfcmVmPTEgbWVfcmFuZ2U9MTYgY2hyb21hX21lPTEgdHJlbGxpcz0xIDh4OGRjdD0xIGNxbT0wIGRlYWR6b25lPTIxLDExIGZhc3RfcHNraXA9MSBjaHJvbWFfcXBfb2Zmc2V0PS0yIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTMgYl9weXJhbWlkPTIgYl9hZGFwdD0xIGJfYmlhcz0wIGRpcmVjdD0xIHdlaWdodGI9MSBvcGVuX2dvcD0wIHdlaWdodHA9MiBrZXlpbnQ9MjUwIGtleWludF9taW49MSBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTQwIHJjPWNyZiBtYnRyZWU9MSBjcmY9MjMuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAABBliIQAFf/+98nvwKbr29+B';
+
+  function setupNoSleepVideo(){
+    try{
+      const video = document.createElement('video');
+      video.muted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('loop', '');
+      video.loop = true;
+      video.setAttribute('autoplay', '');
+      video.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;';
+      video.src = NOSLEEP_VIDEO_BASE64;
+      document.body.appendChild(video);
+
+      const tryPlay = ()=> video.play().catch(()=>{});
+      tryPlay();
+      document.addEventListener('click', tryPlay, {passive: true});
+      document.addEventListener('touchstart', tryPlay, {passive: true});
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.visibilityState === 'visible') tryPlay();
+      });
+      // Manche iOS-Versionen pausieren das Video trotz loop-Attribut kurz beim Ende
+      video.addEventListener('ended', tryPlay);
+
+      // "Herzschlag": alle paar Sekunden aktiv nachprüfen und nötigenfalls neu starten —
+      // iOS beendet Video/Wake-Lock im Standalone-Modus manchmal lautlos, ohne ein
+      // 'pause'/'release'-Event zu feuern, das der Code sonst mitbekommen würde.
+      setInterval(()=>{
+        if(video.paused) tryPlay();
+        if(wakeDesired && !wakeLock) requestWakeLock();
+      }, 10000);
+    }catch(err){
+      // Fallback nicht verfügbar — Wake Lock API (falls unterstützt) läuft trotzdem separat weiter
+    }
+  }
+  setupNoSleepVideo();
+
   // Hintergrundmusik über die eigene Audiodatei (siehe <audio id="bgMusic"> oben im <body>)
+  // Startet standardmäßig AUS und läuft nur, wenn der Button aktiv angeschaltet wird.
+  // Bei jeder Aktivierung beginnt der Track wieder von vorne.
   const bgMusic = document.getElementById('bgMusic');
-  let musicMuted = false;
+  let musicMuted = true;
 
   function toggleMusicMute(){
     musicMuted = !musicMuted;
     if(musicMuted){
       bgMusic.pause();
     } else {
+      bgMusic.currentTime = 0;
       bgMusic.play().catch(()=>{});
     }
     const btn = document.getElementById('musicBtn');
@@ -779,16 +826,6 @@
   }
 
   document.getElementById('musicBtn').addEventListener('click', toggleMusicMute);
-
-  // Browser verlangen eine Nutzer-Interaktion, bevor Audio starten darf —
-  // bei der ersten Berührung/Klick auf die Seite automatisch starten.
-  function musicOnFirstGesture(){
-    if(!musicMuted) bgMusic.play().catch(()=>{});
-    document.removeEventListener('click', musicOnFirstGesture);
-    document.removeEventListener('touchstart', musicOnFirstGesture);
-  }
-  document.addEventListener('click', musicOnFirstGesture);
-  document.addEventListener('touchstart', musicOnFirstGesture);
 
   // Fix for mobile browser dynamic viewport height (address bar show/hide)
   function setVh(){
