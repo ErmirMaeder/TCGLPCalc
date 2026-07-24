@@ -504,7 +504,7 @@
 </head>
 <body>
 <!-- ►► HIER EIGENE AUDIODATEI EINTRAGEN: Pfad in src="..." anpassen ◄◄ -->
-<audio id="bgMusic" src="39. Free Duel.mp3" loop preload="auto"></audio>
+<audio id="bgMusic" src="audio/DEINE-DATEI.mp3" loop preload="auto"></audio>
 <div id="intro">
   <div class="intro-stage">
     <div class="intro-ring r1"></div>
@@ -759,6 +759,14 @@
       });
       // Manche iOS-Versionen pausieren das Video trotz loop-Attribut kurz beim Ende
       video.addEventListener('ended', tryPlay);
+
+      // "Herzschlag": alle paar Sekunden aktiv nachprüfen und nötigenfalls neu starten —
+      // iOS beendet Video/Wake-Lock im Standalone-Modus manchmal lautlos, ohne ein
+      // 'pause'/'release'-Event zu feuern, das der Code sonst mitbekommen würde.
+      setInterval(()=>{
+        if(video.paused) tryPlay();
+        if(!wakeLock) requestWakeLock();
+      }, 10000);
     }catch(err){
       // Fallback nicht verfügbar — Wake Lock API (falls unterstützt) läuft trotzdem separat weiter
     }
