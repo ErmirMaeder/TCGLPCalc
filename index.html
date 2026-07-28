@@ -2,1021 +2,2313 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Yu-Gi-Oh Lebenspunktezähler</title>
-<link rel="icon" type="image/png" href="favicon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#05070d">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FamilyBudget">
+<meta name="theme-color" content="#1a2744">
+<title>FamilyBudget</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
+<meta name="apple-touch-fullscreen" content="yes">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{
-    --bg: #05070d;
-    --blue: #2fa8ff;
-    --blue-glow: rgba(47,168,255,0.55);
-    --blue-dim: rgba(47,168,255,0.12);
-    --red: #ff3b4a;
-    --red-glow: rgba(255,59,74,0.55);
-    --red-dim: rgba(255,59,74,0.12);
-    --line: rgba(255,255,255,0.08);
-    --ink: #eaf2ff;
-    --vh: 1vh;
-  }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
-  html,body{ height:100%; margin:0; }
-  body{
-    background: #000;
-    font-family:'Rajdhani', sans-serif;
-    color:var(--ink);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    height:calc(var(--vh, 1vh) * 100);
-    width:100vw;
-    overflow:hidden;
-    position:fixed;
-    inset:0;
-  }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --ios-bg:#f2f2f7;
+  --ios-card:#ffffff;
+  --ios-blue:#007aff;
+  --ios-green:#34c759;
+  --ios-red:#ff3b30;
+  --ios-orange:#ff9500;
+  --ios-gray:#8e8e93;
+  --ios-gray2:#aeaeb2;
+  --ios-gray6:#f2f2f7;
+  --ios-sep:rgba(60,60,67,.18);
+  --ios-label:#000000;
+  --ios-label2:rgba(60,60,67,.6);
+  --ios-label3:rgba(60,60,67,.3);
+  --ios-fill:rgba(120,120,128,.2);
+  --ios-fill2:rgba(120,120,128,.16);
+  --nav-h:44px;
+  --tab-h:83px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --ios-bg:#000000;
+  --ios-card:#1c1c1e;
+  --ios-blue:#0a84ff;
+  --ios-green:#30d158;
+  --ios-red:#ff453a;
+  --ios-orange:#ff9f0a;
+  --ios-gray:#8e8e93;
+  --ios-gray2:#636366;
+  --ios-gray6:#1c1c1e;
+  --ios-sep:rgba(84,84,88,.65);
+  --ios-label:#ffffff;
+  --ios-label2:rgba(235,235,245,.6);
+  --ios-label3:rgba(235,235,245,.3);
+  --ios-fill:rgba(118,118,128,.36);
+  --ios-fill2:rgba(118,118,128,.32);
+}}
+html,body{height:100%;overflow:hidden;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;
+  background:var(--ios-bg);color:var(--ios-label);font-size:17px;line-height:1.29}
 
-  .app{
-    position:relative;
-    width:100%;
-    height:100%;
-    max-width:100%;
-    display:flex;
-    flex-direction:column;
-    background:
-      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 42px),
-      radial-gradient(900px 500px at 50% 0%, var(--red-dim), transparent 65%),
-      radial-gradient(900px 500px at 50% 100%, var(--blue-dim), transparent 65%),
-      var(--bg);
-  }
+/* ══ SPLASH ══ */
+#splash{position:fixed;inset:0;background:#1a2744;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;gap:0}
+.splash-icon{width:100px;height:100px;background:#1a2744;border-radius:22px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);margin-bottom:20px}
+.splash-name{font-size:28px;font-weight:700;color:#fff;letter-spacing:-.5px}
+.splash-sub{font-size:14px;color:rgba(255,255,255,.45);margin-top:6px;margin-bottom:32px}
+.splash-spin{width:24px;height:24px;border:2.5px solid rgba(255,255,255,.2);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  /* On roomy screens (tablets/desktops), present the mat as a contained card rather than edge-to-edge */
-  @media (min-width: 720px) and (min-height: 640px){
-    body{ padding:clamp(16px, 3vw, 40px); }
-    .app{
-      max-width:560px;
-      max-height:900px;
-      margin:auto;
-      border:1px solid var(--line);
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
-    }
-  }
+/* ══ LOGIN ══ */
+#loginScreen{position:fixed;inset:0;background:#1a2744;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  z-index:1000;padding:32px 24px;overflow-y:auto}
+.login-icon{width:80px;height:80px;background:#1a2744;border:2px solid rgba(255,255,255,.15);
+  border-radius:18px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.login-title{font-size:32px;font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:4px}
+.login-sub{font-size:15px;color:rgba(255,255,255,.45);margin-bottom:36px;text-align:center;line-height:1.4}
+.login-segment{display:flex;background:rgba(255,255,255,.1);border-radius:9px;padding:2px;
+  margin-bottom:24px;width:100%;max-width:340px}
+.lseg{flex:1;padding:7px;text-align:center;border-radius:7px;font-size:13px;font-weight:600;
+  color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;border:none;background:none}
+.lseg.active{background:rgba(255,255,255,.95);color:#1a2744;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.login-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;width:100%;max-width:340px;overflow:hidden;backdrop-filter:blur(20px)}
+.login-field{padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:3px}
+.login-field:last-of-type{border-bottom:none}
+.lf-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.3px;text-transform:uppercase}
+.lf-input{background:none;border:none;color:#fff;font-size:16px;outline:none;width:100%;
+  font-family:inherit;-webkit-appearance:none}
+.lf-input::placeholder{color:rgba(255,255,255,.25)}
+.lf-input:-webkit-autofill{-webkit-box-shadow:0 0 0 30px rgba(255,255,255,.08) inset;-webkit-text-fill-color:#fff}
+.login-btn{width:100%;max-width:340px;margin-top:14px;padding:15px;border-radius:14px;border:none;
+  background:#007aff;color:#fff;font-size:17px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:opacity .15s}
+.login-btn:active{opacity:.8}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-err{max-width:340px;width:100%;margin-top:10px;padding:12px 16px;border-radius:12px;
+  background:rgba(255,59,48,.2);border:1px solid rgba(255,59,48,.35);
+  font-size:14px;color:#ff6b63;display:none;line-height:1.4}
+.login-ok{max-width:340px;width:100%;margin-top:10px;padding:12px 16px;border-radius:12px;
+  background:rgba(52,199,89,.15);border:1px solid rgba(52,199,89,.3);
+  font-size:14px;color:#30d158;display:none}
+.login-link{margin-top:14px;background:none;border:none;color:rgba(255,255,255,.4);
+  font-size:14px;cursor:pointer;font-family:inherit}
 
-  .center-divider{
-    position:absolute;
-    top:50%; left:0; right:0;
-    height:1px;
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-    z-index:5;
-  }
-  .center-controls{
-    position:absolute;
-    top:50%; left:50%;
-    transform:translate(-50%,-50%);
-    z-index:10;
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:clamp(6px, 2vw, 10px);
-    width:min(92vw, 260px);
-  }
-  .icon-btn{
-    width:clamp(44px, 10vw, 56px);
-    height:clamp(44px, 10vw, 56px);
-    clip-path: polygon(20% 0, 100% 0, 100% 80%, 80% 100%, 0 100%, 0 20%);
-    border:1px solid var(--line);
-    background:#0c1018;
-    color:var(--ink);
-    display:flex; align-items:center; justify-content:center;
-    font-size:clamp(17px, 4.4vw, 22px);
-    cursor:pointer;
-  }
-  .icon-btn:active{ background:#171d2b; }
+/* ══ FAMILY SETUP ══ */
+#familyScreen{position:fixed;inset:0;background:#1a2744;display:none;
+  flex-direction:column;align-items:center;justify-content:center;z-index:900;
+  padding:32px 24px;overflow-y:auto}
+.setup-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  border-radius:20px;width:100%;max-width:380px;overflow:hidden}
+.setup-header{padding:20px 20px 0;margin-bottom:16px}
+.setup-title{font-size:20px;font-weight:700;color:#fff}
+.setup-sub{font-size:14px;color:rgba(255,255,255,.4);margin-top:4px}
+.setup-option{display:flex;align-items:center;gap:14px;padding:16px 20px;
+  cursor:pointer;border-bottom:1px solid rgba(255,255,255,.08);
+  background:none;border-left:none;border-right:none;border-top:none;
+  width:100%;text-align:left;transition:background .15s}
+.setup-option:last-child{border-bottom:none}
+.setup-option:active{background:rgba(255,255,255,.08)}
+.setup-opt-icon{width:40px;height:40px;border-radius:10px;background:#007aff;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.setup-opt-title{font-size:15px;font-weight:600;color:#fff}
+.setup-opt-desc{font-size:13px;color:rgba(255,255,255,.4);margin-top:2px}
+.setup-chevron{font-size:18px;color:rgba(255,255,255,.25);margin-left:auto}
+.invite-display{background:rgba(0,122,255,.15);border:2px dashed rgba(0,122,255,.5);
+  border-radius:14px;padding:20px;text-align:center;margin:0 20px 20px}
+.invite-code{font-size:38px;font-weight:800;letter-spacing:10px;color:#007aff;font-family:'SF Mono',monospace}
 
-  .player{
-    flex:1;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    padding:clamp(6px, 2vh, 14px) clamp(10px, 3vw, 16px);
-    gap:clamp(4px, 1.4vh, 8px);
-    overflow:hidden;
-  }
-  .player.top{ transform:rotate(180deg); }
-  .player::before{
-    content:'';
-    position:absolute; inset:0;
-    opacity:0.9;
-    pointer-events:none;
-    transition:opacity 0.25s ease;
-  }
-  .player.red::before{ background:radial-gradient(700px 320px at 50% 30%, var(--red-dim), transparent 70%); }
-  .player.blue::before{ background:radial-gradient(700px 320px at 50% 70%, var(--blue-dim), transparent 70%); }
-  .player.danger.red::before{ background:radial-gradient(700px 380px at 50% 30%, rgba(255,59,74,0.32), transparent 72%); }
-  .player.danger.blue::before{ background:radial-gradient(700px 380px at 50% 70%, rgba(47,168,255,0.32), transparent 72%); }
+/* ══ MAIN APP ══ */
+#app{display:none;flex-direction:column;height:100%;height:100dvh}
+#app.visible{display:flex}
 
-  .top-row{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    z-index:2;
-  }
-  .tag{
-    font-family:'Orbitron', sans-serif;
-    font-size:clamp(8px, 2vw, 10px);
-    letter-spacing:3px;
-    padding:3px 8px;
-    border:1px solid currentColor;
-    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-  }
-  .red .tag{ color:var(--red); }
-  .blue .tag{ color:var(--blue); }
+/* iOS Large Title Navigation */
+.ios-nav{background:rgba(242,242,247,.92);border-bottom:1px solid var(--ios-sep);
+  padding-top:var(--safe-top);flex-shrink:0;backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);position:sticky;top:0;z-index:50}
+@media(prefers-color-scheme:dark){.ios-nav{background:rgba(28,28,30,.92)}}
+.ios-nav-bar{height:var(--nav-h);display:flex;align-items:center;padding:0 16px;gap:8px}
+.ios-nav-title{font-size:17px;font-weight:600;flex:1;text-align:center;color:var(--ios-label)}
+.ios-nav-btn{background:none;border:none;color:var(--ios-blue);font-size:17px;cursor:pointer;
+  padding:6px;font-family:inherit;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.ios-nav-btn-icon{font-size:22px}
+.ios-large-title{padding:0 20px 12px;font-size:34px;font-weight:700;letter-spacing:-.5px;color:var(--ios-label)}
+.ios-search{margin:0 16px 12px;background:var(--ios-fill);border-radius:10px;
+  display:flex;align-items:center;gap:6px;padding:8px 12px}
+.ios-search-icon{font-size:16px;color:var(--ios-gray)}
+.ios-search input{background:none;border:none;outline:none;font-size:15px;color:var(--ios-label);
+  flex:1;font-family:inherit}
+.ios-search input::placeholder{color:var(--ios-gray2)}
 
-  .name{
-    font-family:'Rajdhani', sans-serif;
-    font-weight:600;
-    font-size:clamp(12px, 3vw, 15px);
-    letter-spacing:2px;
-    text-transform:uppercase;
-    color:var(--ink);
-    background:transparent;
-    border:none;
-    text-align:center;
-    width:min(60vw, 150px);
-    outline:none;
-    border-bottom:1px solid transparent;
-    z-index:2;
-  }
-  .name:focus{ border-bottom:1px solid currentColor; }
-  .red .name{ caret-color:var(--red); }
-  .blue .name{ caret-color:var(--blue); }
+/* Month pill in nav */
+.mon-pill{display:flex;align-items:center;gap:6px;background:var(--ios-fill);
+  border-radius:20px;padding:5px 12px 5px 6px;cursor:pointer;border:none;font-family:inherit}
+.mon-pill-lbl{font-size:15px;font-weight:600;color:var(--ios-label)}
+.mon-arrow{background:var(--ios-blue);color:#fff;border:none;width:28px;height:28px;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px}
+.today-pill{background:var(--ios-blue);color:#fff;border:none;border-radius:20px;
+  padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  display:none;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 
-  .lp-display{
-    font-family:'Orbitron', sans-serif;
-    font-weight:900;
-    font-size:clamp(40px, min(17vw, 15vh), 92px);
-    line-height:1;
-    letter-spacing:2px;
-    color:var(--ink);
-    z-index:2;
-    transition:transform 0.12s ease;
-    white-space:nowrap;
-  }
-  .red .lp-display{ text-shadow: 0 0 22px var(--red-glow); }
-  .blue .lp-display{ text-shadow: 0 0 22px var(--blue-glow); }
-  .lp-display.hit{ transform:scale(1.07); }
-  .lp-display.zero{ color:#ffffff; text-shadow:0 0 30px rgba(255,255,255,0.9); }
+/* ══ SCROLL CONTENT ══ */
+.ios-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;background:var(--ios-bg)}
+.ios-content{max-width:740px;margin:0 auto;padding-bottom:calc(var(--tab-h) + 8px)}
 
-  .bar-track{
-    width:min(80vw, 440px);
-    height:clamp(5px, 1vh, 8px);
-    background:#0c0f16;
-    border:1px solid var(--line);
-    clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-    overflow:hidden;
-    z-index:2;
-    flex-shrink:0;
-  }
-  .bar-fill{
-    height:100%;
-    width:100%;
-    transition:width 0.35s ease;
-  }
-  .red .bar-fill{ background:linear-gradient(90deg, #7a0d17, var(--red)); box-shadow:0 0 10px var(--red-glow); }
-  .blue .bar-fill{ background:linear-gradient(90deg, #0a3d6b, var(--blue)); box-shadow:0 0 10px var(--blue-glow); }
+/* ══ iOS GROUPED SECTIONS ══ */
+.ios-section{margin:20px 0 0}
+.ios-section-header{font-size:13px;font-weight:400;color:var(--ios-label2);
+  letter-spacing:.3px;text-transform:uppercase;padding:0 20px;margin-bottom:6px}
+.ios-section-footer{font-size:13px;color:var(--ios-label2);padding:6px 20px 0;line-height:1.4}
+.ios-list{background:var(--ios-card);border-radius:12px;margin:0 16px;overflow:hidden}
+.ios-row{display:flex;align-items:center;gap:12px;padding:11px 16px;
+  border-bottom:1px solid var(--ios-sep);min-height:44px;position:relative}
+.ios-row:last-child{border-bottom:none}
+.ios-row-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;
+  justify-content:center;font-size:16px;flex-shrink:0}
+.ios-row-label{flex:1;font-size:17px;color:var(--ios-label);min-width:0}
+.ios-row-value{font-size:17px;color:var(--ios-label2);flex-shrink:0}
+.ios-row-chevron{color:var(--ios-gray2);font-size:14px;flex-shrink:0}
+.ios-row-sub{font-size:13px;color:var(--ios-label2);margin-top:1px}
+.ios-row-tappable{cursor:pointer;transition:background .1s}
+.ios-row-tappable:active{background:var(--ios-fill2)}
 
-  .delta-row{
-    font-family:'Orbitron', sans-serif;
-    font-size:clamp(11px, 2.6vw, 13px);
-    min-height:16px;
-    letter-spacing:1px;
-    z-index:2;
-  }
-  .red .delta-row{ color:var(--red); }
-  .blue .delta-row{ color:var(--blue); }
+/* ══ METRIC CARDS ══ */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;margin-top:12px}
+.metric-card{background:var(--ios-card);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.metric-card-label{font-size:13px;font-weight:500;color:var(--ios-label2);margin-bottom:4px}
+.metric-card-value{font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.1}
+.metric-card-sub{font-size:12px;color:var(--ios-label3);margin-top:4px}
+.metric-card-icon{position:absolute;top:14px;right:14px;width:32px;height:32px;
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.mc-blue{color:#007aff}.mc-green{color:#34c759}.mc-red{color:#ff3b30}.mc-orange{color:#ff9500}
+.mc-blue-bg{background:rgba(0,122,255,.12)}.mc-green-bg{background:rgba(52,199,89,.12)}
+.mc-red-bg{background:rgba(255,59,48,.12)}.mc-orange-bg{background:rgba(255,149,0,.12)}
 
-  .btn-grid{
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:clamp(5px, 1.4vw, 8px);
-    width:100%;
-    max-width:420px;
-    z-index:2;
-  }
-  .chip{
-    padding:clamp(6px, 1.6vh, 10px) 0;
-    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-    border:1px solid var(--line);
-    background:#0c0f16;
-    color:var(--ink);
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:clamp(11px, 2.8vw, 15px);
-    text-align:center;
-    cursor:pointer;
-  }
-  .red .chip:active{ background:var(--red-dim); border-color:var(--red); }
-  .blue .chip:active{ background:var(--blue-dim); border-color:var(--blue); }
-  .chip.minus{ color:#ffb3ba; }
-  .chip.plus{ color:#b9e2ff; }
+/* ══ TRANSACTION ROWS ══ */
+.txn-row{display:flex;align-items:center;gap:12px;padding:11px 16px;
+  border-bottom:1px solid var(--ios-sep);background:var(--ios-card)}
+.txn-row:last-child{border-bottom:none}
+.txn-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0}
+.txn-body{flex:1;min-width:0}
+.txn-title{font-size:16px;font-weight:500;color:var(--ios-label);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.txn-sub{font-size:13px;color:var(--ios-label2);margin-top:1px}
+.txn-amount{font-size:17px;font-weight:600;flex-shrink:0}
+.txn-actions{display:flex;gap:0}
+.txn-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  border:none;cursor:pointer;font-size:18px;background:none;transition:opacity .15s}
+.txn-btn:active{opacity:.6}
 
-  .custom-row{
-    display:flex;
-    gap:clamp(5px, 1.4vw, 8px);
-    width:100%;
-    max-width:420px;
-    margin-top:2px;
-    z-index:2;
-  }
-  .custom-trigger{
-    flex:1;
-    padding:clamp(6px, 1.6vh, 8px) 0;
-    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-    border:1px solid var(--line);
-    background:#0c0f16;
-    color:var(--ink);
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:clamp(12px, 2.8vw, 15px);
-    cursor:pointer;
-  }
-  .red .custom-trigger{ border-color:var(--red); color:var(--red); }
-  .blue .custom-trigger{ border-color:var(--blue); color:var(--blue); }
-  .red .custom-trigger:active{ background:var(--red-dim); }
-  .blue .custom-trigger:active{ background:var(--blue-dim); }
-  .custom-btn{
-    padding:clamp(6px, 1.6vh, 8px) clamp(10px, 3vw, 16px);
-    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-    border:1px solid var(--line);
-    background:transparent;
-    color:var(--ink);
-    font-weight:700;
-    cursor:pointer;
-    font-size:clamp(13px, 2.8vw, 16px);
-    font-family:'Rajdhani', sans-serif;
-  }
+/* Swipe-style action buttons */
+.txn-edit-btn{color:var(--ios-blue)}
+.txn-del-btn{color:var(--ios-red)}
 
-  /* Very short viewports (landscape phones): trim vertical rhythm and shrink secondary controls */
-  @media (max-height: 460px){
-    .top-row{ display:none; }
-    .name{ font-size:11px; }
-    .lp-display{ font-size:clamp(30px, 11vh, 60px); }
-    .btn-grid{ max-width:360px; }
-    .custom-row{ max-width:360px; }
-  }
+/* ══ CHARTS ══ */
+.chart-card{background:var(--ios-card);border-radius:16px;margin:12px 16px 0;padding:16px}
+.chart-title{font-size:15px;font-weight:600;color:var(--ios-label);margin-bottom:12px}
+.chart-wrap{position:relative}
 
-  /* Very narrow viewports: keep chips legible by wrapping to a 4-col grid with tighter type (already fluid via clamp) */
-  @media (max-width: 340px){
-    .name{ width:70vw; }
-    .bar-track{ width:88vw; }
-  }
+/* ══ PROGRESS BARS ══ */
+.prog-row{margin-bottom:10px}
+.prog-row-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.prog-emoji{font-size:16px}
+.prog-label{font-size:14px;font-weight:500;color:var(--ios-label);flex:1}
+.prog-value{font-size:13px;color:var(--ios-label2)}
+.prog-track{background:var(--ios-fill);border-radius:4px;height:5px;overflow:hidden}
+.prog-fill{height:5px;border-radius:4px;transition:width .5s}
 
-  /* Reset overlay */
-  .overlay{
-    position:fixed; inset:0;
-    background:rgba(5,7,13,0.94);
-    z-index:50;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-  }
-  .overlay.show{ display:flex; }
-  .panel{
-    background:#0c0f16;
-    border:1px solid var(--line);
-    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
-    padding:clamp(18px, 4vw, 24px) clamp(18px, 5vw, 26px);
-    width:min(90vw, 340px);
-    text-align:center;
-  }
-  .panel h2{
-    font-family:'Orbitron', sans-serif;
-    color:var(--ink);
-    font-size:16px;
-    letter-spacing:3px;
-    margin:0 0 16px;
-    text-transform:uppercase;
-  }
-  .start-lp-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-    margin-bottom:18px;
-  }
-  .start-lp-grid .chip{ padding:12px 0; font-size:15px; color:var(--ink); }
-  .start-lp-grid .chip.active{ border-color:#fff; color:#fff; background:rgba(255,255,255,0.06); }
-  .panel-actions{ display:flex; gap:10px; }
-  .panel-actions .custom-btn{ flex:1; border-color:var(--line); color:var(--ink); }
-  .panel-actions .confirm{ border-color:var(--blue); color:var(--blue); }
+/* ══ FORM ELEMENTS ══ */
+.ios-form{background:var(--ios-card);border-radius:12px;margin:0 16px;overflow:hidden}
+.ios-form-field{display:flex;align-items:center;gap:12px;padding:11px 16px;
+  border-bottom:1px solid var(--ios-sep);min-height:44px}
+.ios-form-field:last-child{border-bottom:none}
+.ios-form-label{font-size:17px;color:var(--ios-label);white-space:nowrap;min-width:90px}
+.ios-form-input{flex:1;background:none;border:none;outline:none;font-size:17px;
+  color:var(--ios-label);text-align:right;font-family:inherit;-webkit-appearance:none;min-width:0}
+.ios-form-input::placeholder{color:var(--ios-label3)}
+.ios-form-select{flex:1;background:none;border:none;outline:none;font-size:17px;
+  color:var(--ios-blue);text-align:right;font-family:inherit;-webkit-appearance:none;
+  background-image:none;cursor:pointer;min-width:0}
 
-  .tool-face{
-    font-size:clamp(64px, 22vw, 110px);
-    line-height:1;
-    margin:6px 0 14px;
-    filter:drop-shadow(0 0 14px rgba(255,255,255,0.35));
-    display:inline-block;
-  }
-  .tool-face.rolling{
-    animation: diceWobble 0.26s ease-in-out infinite;
-  }
-  @keyframes diceWobble{
-    0%{ transform: rotate(-12deg) scale(1); }
-    50%{ transform: rotate(10deg) scale(1.12); }
-    100%{ transform: rotate(-12deg) scale(1); }
-  }
-  .tool-result{
-    font-family:'Orbitron', sans-serif;
-    font-size:15px;
-    letter-spacing:2px;
-    color:var(--ink);
-    margin-bottom:16px;
-    min-height:20px;
-    text-transform:uppercase;
-  }
-  .coin-stage{
-    width:110px; height:110px;
-    margin:6px auto 14px;
-    perspective:600px;
-  }
-  .coin{
-    width:100%; height:100%;
-    position:relative;
-    transform-style:preserve-3d;
-    transition:transform 2.2s cubic-bezier(.15,.75,.2,1), scale 2.2s ease;
-  }
-  .coin.flipping{ scale: 1.15; }
-  .coin-face{
-    position:absolute; inset:0;
-    border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    backface-visibility:hidden;
-    font-family:'Orbitron', sans-serif;
-    font-weight:900;
-    font-size:14px;
-    letter-spacing:1px;
-    border:2px solid rgba(255,255,255,0.25);
-  }
-  .coin-front{ background:radial-gradient(circle at 32% 30%, #fff6d8, var(--red)); color:#3a0d12; }
-  .coin-back{ background:radial-gradient(circle at 32% 30%, #eaf6ff, var(--blue)); color:#08243f; transform:rotateY(180deg); }
-  .panel-actions .roll-again{ border-color:#fff; color:#fff; }
+/* ══ BOTTOM SHEET ══ */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+  display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.sheet{background:var(--ios-card);border-radius:20px 20px 0 0;width:100%;max-width:640px;
+  box-shadow:0 -4px 40px rgba(0,0,0,.2);padding-bottom:var(--safe-bottom);
+  max-height:94vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet-handle{width:36px;height:5px;background:var(--ios-gray2);border-radius:3px;
+  margin:10px auto 0;opacity:.5}
+.sheet-header{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 8px}
+.sheet-title{font-size:17px;font-weight:600;color:var(--ios-label)}
+.sheet-close{background:var(--ios-fill);border:none;color:var(--ios-label2);
+  width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;font-family:inherit}
+.sheet-btn{margin:12px 16px;padding:15px;border-radius:14px;border:none;
+  font-size:17px;font-weight:600;cursor:pointer;font-family:inherit;width:calc(100% - 32px);
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.sheet-btn:active{opacity:.8}
+.sheet-btn-blue{background:var(--ios-blue);color:#fff}
+.sheet-btn-green{background:var(--ios-green);color:#fff}
+.sheet-btn-red{background:var(--ios-red);color:#fff}
+.sheet-btn-gray{background:var(--ios-fill);color:var(--ios-label)}
 
-  .keypad-panel{ transition:transform 0.25s ease; }
-  .keypad-panel.flipped{ transform:rotate(180deg); }
-  .keypad-display{
-    font-family:'Orbitron', sans-serif;
-    font-size:clamp(28px, 8vw, 40px);
-    font-weight:700;
-    color:#fff;
-    background:#0c0f16;
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:10px 0;
-    margin-bottom:14px;
-    letter-spacing:1px;
-  }
-  .keypad-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:8px;
-    margin-bottom:16px;
-  }
-  .keypad-key{
-    padding:14px 0;
-    border-radius:8px;
-    border:1px solid var(--line);
-    background:#0c0f16;
-    color:#fff;
-    font-family:'Orbitron', sans-serif;
-    font-size:18px;
-    font-weight:700;
-    cursor:pointer;
-  }
-  .keypad-key:active{ background:rgba(255,255,255,0.1); }
+/* ══ MONTH PICKER ══ */
+.month-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 16px}
+.month-cell{padding:10px 4px;text-align:center;border-radius:10px;cursor:pointer;
+  font-size:15px;font-weight:500;color:var(--ios-label);transition:all .15s;border:none;background:none}
+.month-cell:active{background:var(--ios-fill)}
+.month-cell.sel{background:var(--ios-blue);color:#fff;font-weight:700}
+.month-cell.has{background:var(--ios-fill2)}
+.year-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px}
+.year-nav-btn{background:var(--ios-fill);border:none;color:var(--ios-label);width:32px;height:32px;
+  border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.year-label{font-size:20px;font-weight:700;color:var(--ios-label)}
 
-  .icon-btn.active{ border-color:#54e38e; box-shadow:0 0 10px rgba(84,227,142,0.4); }
-  .icon-btn.error{ border-color:var(--red); box-shadow:0 0 10px rgba(255,59,74,0.4); }
+/* ══ TAB BAR ══ */
+.ios-tab-bar{background:rgba(242,242,247,.92);border-top:1px solid var(--ios-sep);
+  padding-bottom:var(--safe-bottom);flex-shrink:0;display:flex;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:sticky;bottom:0;z-index:40}
+@media(prefers-color-scheme:dark){.ios-tab-bar{background:rgba(28,28,30,.92)}}
+.ios-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 4px 4px;cursor:pointer;border:none;background:none;transition:opacity .1s}
+.ios-tab:active{opacity:.7}
+.ios-tab-icon{font-size:24px;line-height:1}
+.ios-tab-label{font-size:10px;font-weight:500;color:var(--ios-gray);letter-spacing:.1px}
+.ios-tab.active .ios-tab-icon{filter:none}
+.ios-tab.active .ios-tab-label{color:var(--ios-blue);font-weight:600}
 
-  @media (prefers-reduced-motion: reduce){
-    .lp-display, .bar-fill{ transition:none; }
-  }
+/* Desktop: top nav tabs instead of bottom */
+@media(min-width:768px){
+  .ios-tab-bar{display:none}
+  .desk-nav{display:flex!important}
+  .ios-large-title{padding-left:24px;padding-right:24px}
+  .ios-list,.ios-form,.metric-grid,.chart-card{margin-left:24px;margin-right:24px}
+  .metric-grid{grid-template-columns:repeat(4,1fr)}
+}
+.desk-nav{display:none;background:rgba(242,242,247,.95);border-bottom:1px solid var(--ios-sep);
+  padding:0 24px;gap:4px;backdrop-filter:blur(20px)}
+@media(prefers-color-scheme:dark){.desk-nav{background:rgba(28,28,30,.95)}}
+.desk-tab{padding:10px 14px;border-radius:8px;border:none;background:none;
+  font-size:13px;font-weight:500;color:var(--ios-label2);cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;font-family:inherit}
+.desk-tab:hover{background:var(--ios-fill);color:var(--ios-label)}
+.desk-tab.active{background:var(--ios-fill);color:var(--ios-blue);font-weight:600}
 
-  /* Intro splash */
-  #intro{
-    position:fixed; inset:0;
-    z-index:200;
-    background:radial-gradient(900px 700px at 50% 45%, rgba(124,79,214,0.22), transparent 65%), #04050a;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    overflow:hidden;
-    cursor:pointer;
-    transition:opacity 0.7s ease, visibility 0.7s ease;
-  }
-  #intro.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+/* ══ INDICATOR ══ */
+.ios-notice{display:flex;align-items:center;gap:10px;margin:12px 16px 0;
+  background:var(--ios-card);border-radius:12px;padding:12px 14px;font-size:14px}
+.ios-notice-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ios-notice-blue{border-left:3px solid var(--ios-blue)}
+.ios-notice-blue .ios-notice-dot{background:var(--ios-blue)}
+.ios-notice-green{border-left:3px solid var(--ios-green)}
+.ios-notice-green .ios-notice-dot{background:var(--ios-green)}
+.ios-notice-orange{border-left:3px solid var(--ios-orange)}
+.ios-notice-orange .ios-notice-dot{background:var(--ios-orange)}
 
-  .intro-stage{
-    position:relative;
-    width:min(78vw, 320px);
-    height:min(78vw, 320px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .intro-ring{
-    position:absolute;
-    inset:0;
-    border-radius:50%;
-    border:1px solid rgba(255,255,255,0.18);
-  }
-  .intro-ring.r1{ animation:spin 12s linear infinite; border-color:rgba(255,92,105,0.4); }
-  .intro-ring.r2{ inset:22px; animation:spin 9s linear infinite reverse; border-color:rgba(74,180,255,0.4); border-style:dashed; }
-  .intro-ring.r3{ inset:44px; animation:spin 16s linear infinite; border-color:rgba(255,255,255,0.15); }
-  .intro-glyphs{
-    position:absolute; inset:8px;
-    border-radius:50%;
-    animation:spin 20s linear infinite;
-    opacity:0.7;
-  }
-  .intro-glyphs div{
-    position:absolute;
-    width:5px; height:5px;
-    border-radius:50%;
-    background:rgba(255,255,255,0.55);
-    box-shadow:0 0 6px rgba(255,255,255,0.6);
-  }
+/* ══ RECURRING CARDS ══ */
+.rec-card{background:var(--ios-card);border-radius:16px;margin:8px 16px 0;padding:16px;
+  display:flex;align-items:flex-start;gap:12px}
+.rec-card-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;flex-shrink:0}
+.rec-card-body{flex:1;min-width:0}
+.rec-card-name{font-size:16px;font-weight:600;color:var(--ios-label)}
+.rec-card-amount{font-size:22px;font-weight:700;letter-spacing:-.5px;margin:2px 0}
+.rec-card-meta{font-size:13px;color:var(--ios-label2)}
+.rec-card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.rec-pill{padding:6px 12px;border-radius:20px;font-size:13px;font-weight:600;
+  border:none;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px}
+.rec-pill-blue{background:rgba(0,122,255,.12);color:var(--ios-blue)}
+.rec-pill-green{background:rgba(52,199,89,.12);color:var(--ios-green)}
+.rec-pill-red{background:rgba(255,59,48,.12);color:var(--ios-red)}
+.rec-pill-gray{background:var(--ios-fill);color:var(--ios-label2)}
+.rec-pill-orange{background:rgba(255,149,0,.12);color:var(--ios-orange)}
+.rec-toggle{position:absolute;top:14px;right:14px}
+.ios-switch{position:relative;width:51px;height:31px;cursor:pointer;flex-shrink:0}
+.ios-switch input{opacity:0;width:0;height:0;position:absolute}
+.ios-switch-track{position:absolute;inset:0;background:var(--ios-gray2);border-radius:31px;transition:background .2s}
+.ios-switch-thumb{position:absolute;top:2px;left:2px;width:27px;height:27px;background:#fff;
+  border-radius:50%;transition:transform .2s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.ios-switch input:checked~.ios-switch-track{background:var(--ios-green)}
+.ios-switch input:checked~.ios-switch-thumb{transform:translateX(20px)}
+.due-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;
+  border-radius:20px;font-size:12px;font-weight:600}
+.due-ok{background:rgba(52,199,89,.12);color:var(--ios-green)}
+.due-warn{background:rgba(255,149,0,.12);color:var(--ios-orange)}
+.due-late{background:rgba(255,59,48,.12);color:var(--ios-red)}
+.due-done{background:var(--ios-fill);color:var(--ios-gray)}
+.due-skip{background:var(--ios-fill);color:var(--ios-gray);text-decoration:line-through}
 
-  .intro-text{
-    margin-top:26px;
-    text-align:center;
-    z-index:2;
-    opacity:0;
-    animation:textIn 1s ease-out 0.6s forwards;
-  }
-  .intro-title{
-    font-family:'Orbitron', sans-serif;
-    font-weight:900;
-    font-size:clamp(24px, 6vw, 34px);
-    letter-spacing:4px;
-    color:#fff;
-    text-shadow:0 0 18px rgba(255,255,255,0.4);
-  }
-  .intro-sub{
-    font-family:'Rajdhani', sans-serif;
-    font-size:13px;
-    letter-spacing:3px;
-    text-transform:uppercase;
-    color:rgba(255,255,255,0.55);
-    margin-top:6px;
-  }
-  .intro-skip{
-    position:absolute;
-    bottom:26px;
-    font-family:'Rajdhani', sans-serif;
-    font-size:12px;
-    letter-spacing:2px;
-    color:rgba(255,255,255,0.4);
-    text-transform:uppercase;
-  }
-  .intro-bar-track{
-    width:min(60vw, 220px);
-    height:3px;
-    background:rgba(255,255,255,0.12);
-    margin-top:18px;
-    border-radius:2px;
-    overflow:hidden;
-    z-index:2;
-  }
-  .intro-bar-fill{
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg, var(--red), var(--blue));
-    animation:introBar 3s linear forwards;
-  }
+/* ══ SETTINGS ══ */
+.emoji-grid{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px}
+.emoji-btn{width:38px;height:38px;border-radius:9px;border:2px solid transparent;
+  background:var(--ios-fill);cursor:pointer;font-size:20px;display:flex;
+  align-items:center;justify-content:center;transition:all .15s}
+.emoji-btn.sel{border-color:var(--ios-blue);background:rgba(0,122,255,.12)}
 
-  @keyframes spin{ to{ transform:rotate(360deg); } }
-  @keyframes monsterIn{ to{ opacity:1; transform:scale(1) translateY(0); } }
-  @keyframes monsterFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
-  @keyframes textIn{ to{ opacity:1; } }
-  @keyframes introBar{ from{ width:0%; } to{ width:100%; } }
+/* ══ PERSON SPLIT ══ */
+.person-row{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  border-bottom:1px solid var(--ios-sep)}
+.person-row:last-child{border-bottom:none}
+.person-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.person-name{flex:1;font-size:16px;font-weight:500;color:var(--ios-label)}
+.person-amount{font-size:17px;font-weight:700}
 
-  @media (prefers-reduced-motion: reduce){
-    .intro-ring, .intro-glyphs, .intro-bar-fill{ animation:none; }
-  }
+/* ══ SYNC DOT ══ */
+.sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.sync-saving{background:var(--ios-blue);animation:pulse 1s infinite}
+.sync-saved{background:var(--ios-green)}
+.sync-err{background:var(--ios-red)}
+
+/* ══ EMPTY ══ */
+.ios-empty{text-align:center;padding:48px 32px;color:var(--ios-label2)}
+.ios-empty-icon{font-size:48px;display:block;margin-bottom:12px;opacity:.4}
+.ios-empty-title{font-size:20px;font-weight:600;color:var(--ios-label);margin-bottom:6px}
+.ios-empty-sub{font-size:15px;line-height:1.5}
+
+/* ══ PAGE ══ */
+.page{display:none}.page.active{display:block}
+
+/* ══ TOAST ══ */
+.ios-toast{position:fixed;bottom:calc(var(--tab-h) + 20px);left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(50,50,50,.9);color:#fff;padding:10px 20px;border-radius:20px;
+  font-size:14px;font-weight:500;z-index:999;opacity:0;transition:all .25s;
+  white-space:nowrap;backdrop-filter:blur(10px);pointer-events:none}
+.ios-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ══ USER PANEL ══ */
+.user-avatar-btn{width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.member-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--ios-sep)}
+.member-row:last-child{border-bottom:none}
+.invite-code-big{font-size:32px;font-weight:800;letter-spacing:8px;color:var(--ios-blue);
+  font-family:'SF Mono',monospace;text-align:center;padding:16px 0}
+
+/* ══ HELP ══ */
+.help-row{display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--ios-sep);background:var(--ios-card)}
+.help-row:last-child{border-bottom:none}
+.help-icon{font-size:28px;flex-shrink:0;margin-top:2px}
+.help-title{font-size:15px;font-weight:600;color:var(--ios-label);margin-bottom:3px}
+.help-text{font-size:14px;color:var(--ios-label2);line-height:1.5}
+
+/* ══ MISC ══ */
+.ios-sep-line{height:1px;background:var(--ios-sep);margin:0 16px}
+.ios-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:600}
+.ios-badge-blue{background:rgba(0,122,255,.12);color:var(--ios-blue)}
+.ios-badge-green{background:rgba(52,199,89,.12);color:var(--ios-green)}
+.ios-badge-gray{background:var(--ios-fill);color:var(--ios-gray)}
+canvas{display:block}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 </style>
 </head>
 <body>
-<!-- ►► HIER EIGENE AUDIODATEI EINTRAGEN: Pfad in src="..." anpassen ◄◄ -->
-<audio id="bgMusic" src="letsduel.mp3" loop preload="auto"></audio>
-<div id="intro">
-  <div class="intro-stage">
-    <div class="intro-ring r1"></div>
-    <div class="intro-ring r2"></div>
-    <div class="intro-ring r3"></div>
-    <div class="intro-glyphs" id="introGlyphs"></div>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-icon">
+    <svg width="60" height="60" viewBox="0 0 200 200">
+      <polygon points="100,30 28,90 172,90" fill="#3b82f6"/>
+      <rect x="46" y="90" width="108" height="74" fill="#2563eb"/>
+      <rect x="76" y="112" width="48" height="52" fill="#1d3f8e"/>
+      <text x="100" y="185" text-anchor="middle" style="font-size:14px;font-weight:700;fill:#93c5fd;font-family:-apple-system,system-ui">FamilyBudget</text>
+    </svg>
   </div>
-  <div class="intro-text">
-    <div class="intro-title">YU-GI-OH</div>
-    <div class="intro-sub" id="introSub">Lebenspunktezähler</div>
-  </div>
-  <div class="intro-bar-track"><div class="intro-bar-fill"></div></div>
-  <div class="intro-skip">Tippen, um zu überspringen</div>
+  <div class="splash-name">FamilyBudget</div>
+  <div class="splash-sub">Familienfinanzen auf allen Geräten</div>
+  <div class="splash-spin"></div>
 </div>
-<div class="app">
 
-
-  <div class="player top red" id="playerTop">
-    <div class="top-row"><span class="tag">Duellant</span></div>
-    <input class="name" id="nameTop" value="Spieler 1" maxlength="16">
-    <div class="lp-display" id="lpTop">8000</div>
-    <div class="bar-track"><div class="bar-fill" id="barTop"></div></div>
-    <div class="delta-row" id="deltaTop">&nbsp;</div>
-    <div class="btn-grid">
-      <div class="chip minus" data-p="top" data-d="-1000">−1000</div>
-      <div class="chip minus" data-p="top" data-d="-500">−500</div>
-      <div class="chip minus" data-p="top" data-d="-100">−100</div>
-      <div class="chip minus" data-p="top" data-d="-50">−50</div>
-      <div class="chip plus" data-p="top" data-d="1000">+1000</div>
-      <div class="chip plus" data-p="top" data-d="500">+500</div>
-      <div class="chip plus" data-p="top" data-d="100">+100</div>
-      <div class="chip plus" data-p="top" data-d="50">+50</div>
-    </div>
-    <div class="custom-row">
-      <button class="custom-trigger" data-p="top">🔢 Eigener Wert</button>
-    </div>
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-icon">
+    <svg width="48" height="48" viewBox="0 0 200 200">
+      <polygon points="100,30 28,90 172,90" fill="#3b82f6"/>
+      <rect x="46" y="90" width="108" height="74" fill="#2563eb"/>
+      <rect x="76" y="112" width="48" height="52" fill="#1d3f8e"/>
+    </svg>
   </div>
-
-  <div class="center-divider"></div>
-  <div class="center-controls">
-    <div class="icon-btn" id="wakeBtn" title="Bildschirm an/aus">☀</div>
-    <div class="icon-btn" id="musicBtn" title="Musik an/aus">🔇</div>
-    <div class="icon-btn" id="diceBtn" title="Würfeln">🎲</div>
-    <div class="icon-btn" id="coinBtn" title="Münzwurf">🪙</div>
-    <div class="icon-btn" id="resetBtn" title="Neues Duell">↺</div>
+  <div class="login-title">FamilyBudget</div>
+  <div class="login-sub">Familienfinanzen einfach verwalten<br>auf allen deinen Geräten</div>
+  <div class="login-segment">
+    <button class="lseg active" id="ltab-login" onclick="switchTab('login')">Anmelden</button>
+    <button class="lseg" id="ltab-register" onclick="switchTab('register')">Registrieren</button>
   </div>
-
-  <div class="player bottom blue" id="playerBottom">
-    <div class="top-row"><span class="tag">Duellant</span></div>
-    <input class="name" id="nameBottom" value="Spieler 2" maxlength="16">
-    <div class="lp-display" id="lpBottom">8000</div>
-    <div class="bar-track"><div class="bar-fill" id="barBottom"></div></div>
-    <div class="delta-row" id="deltaBottom">&nbsp;</div>
-    <div class="btn-grid">
-      <div class="chip minus" data-p="bottom" data-d="-1000">−1000</div>
-      <div class="chip minus" data-p="bottom" data-d="-500">−500</div>
-      <div class="chip minus" data-p="bottom" data-d="-100">−100</div>
-      <div class="chip minus" data-p="bottom" data-d="-50">−50</div>
-      <div class="chip plus" data-p="bottom" data-d="1000">+1000</div>
-      <div class="chip plus" data-p="bottom" data-d="500">+500</div>
-      <div class="chip plus" data-p="bottom" data-d="100">+100</div>
-      <div class="chip plus" data-p="bottom" data-d="50">+50</div>
-    </div>
-    <div class="custom-row">
-      <button class="custom-trigger" data-p="bottom">🔢 Eigener Wert</button>
-    </div>
-  </div>
-
-  <div class="overlay" id="resetOverlay">
-    <div class="panel">
-      <h2>Neues Duell</h2>
-      <div class="start-lp-grid" id="startLpGrid">
-        <div class="chip active" data-lp="8000">8000</div>
-        <div class="chip" data-lp="4000">4000</div>
-        <div class="chip" data-lp="2000">2000 (Speed)</div>
-        <div class="chip" data-lp="16000">16000</div>
+  <!-- LOGIN -->
+  <div id="form-login" style="width:100%;max-width:340px">
+    <div class="login-card">
+      <div class="login-field">
+        <div class="lf-label">E-Mail</div>
+        <input class="lf-input" id="l-email" type="email" placeholder="name@beispiel.ch" autocomplete="email" inputmode="email" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
-      <div class="panel-actions">
-        <button class="custom-btn" id="cancelReset">Abbrechen</button>
-        <button class="custom-btn confirm" id="confirmReset">Starten</button>
+      <div class="login-field">
+        <div class="lf-label">Passwort</div>
+        <input class="lf-input" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
     </div>
+    <button type="button" class="login-btn" id="btn-login" onclick="doLogin()">Anmelden</button>
+    <div id="login-err" class="login-err"></div>
+    <button type="button" class="login-link" onclick="switchTab('reset')">Passwort vergessen?</button>
   </div>
-  <div class="overlay" id="diceOverlay">
-    <div class="panel">
-      <h2>Würfeln</h2>
-      <div class="tool-face" id="diceFace">⚀</div>
-      <div class="tool-result" id="diceResult">&nbsp;</div>
-      <div class="panel-actions">
-        <button class="custom-btn" id="closeDice">Schließen</button>
-        <button class="custom-btn roll-again" id="rollAgain">Nochmal würfeln</button>
+  <!-- REGISTER -->
+  <div id="form-register" style="display:none;width:100%;max-width:340px">
+    <div class="login-card">
+      <div class="login-field">
+        <div class="lf-label">E-Mail</div>
+        <input class="lf-input" id="r-email" type="email" placeholder="name@beispiel.ch" autocomplete="email" onkeydown="if(event.key==='Enter')doRegister()">
       </div>
+      <div class="login-field">
+        <div class="lf-label">Passwort</div>
+        <input class="lf-input" id="r-pass" type="password" placeholder="Mindestens 6 Zeichen" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+    </div>
+    <button type="button" class="login-btn" id="btn-register" onclick="doRegister()">Konto erstellen</button>
+    <div id="register-err" class="login-err"></div>
+    <div id="register-ok" class="login-ok"></div>
+  </div>
+  <!-- RESET -->
+  <div id="form-reset" style="display:none;width:100%;max-width:340px">
+    <div style="font-size:14px;color:rgba(255,255,255,.45);margin-bottom:16px;text-align:center;line-height:1.5">Gib deine E-Mail ein — du erhältst einen Reset-Link.</div>
+    <div class="login-card">
+      <div class="login-field">
+        <div class="lf-label">E-Mail</div>
+        <input class="lf-input" id="reset-email" type="email" placeholder="name@beispiel.ch" onkeydown="if(event.key==='Enter')doReset()">
+      </div>
+    </div>
+    <button type="button" class="login-btn" id="btn-reset" onclick="doReset()">Reset-Link senden</button>
+    <div id="reset-err" class="login-err"></div>
+    <div id="reset-ok" class="login-ok"></div>
+    <button type="button" class="login-link" onclick="switchTab('login')">← Zurück</button>
+  </div>
+</div>
+
+<!-- FAMILY SETUP -->
+<div id="familyScreen">
+  <div class="login-icon" style="margin-bottom:14px">
+    <svg width="48" height="48" viewBox="0 0 200 200">
+      <polygon points="100,30 28,90 172,90" fill="#3b82f6"/>
+      <rect x="46" y="90" width="108" height="74" fill="#2563eb"/>
+      <rect x="76" y="112" width="48" height="52" fill="#1d3f8e"/>
+    </svg>
+  </div>
+  <div style="font-size:28px;font-weight:700;color:#fff;margin-bottom:6px">Familie einrichten</div>
+  <div style="font-size:15px;color:rgba(255,255,255,.4);margin-bottom:28px;text-align:center">Erstelle deine Familie oder tritt einer bei</div>
+
+  <div id="familyOptions" style="width:100%;max-width:380px">
+    <div class="setup-card">
+      <button class="setup-option" onclick="showCreateFamily()">
+        <div class="setup-opt-icon">🏠</div>
+        <div><div class="setup-opt-title">Neue Familie erstellen</div><div class="setup-opt-desc">Starte ein neues Familienbudget</div></div>
+        <div class="setup-chevron">›</div>
+      </button>
+      <button class="setup-option" onclick="showJoinFamily()">
+        <div class="setup-opt-icon">🔗</div>
+        <div><div class="setup-opt-title">Familie beitreten</div><div class="setup-opt-desc">Mit einem Einladungscode</div></div>
+        <div class="setup-chevron">›</div>
+      </button>
     </div>
   </div>
 
-  <div class="overlay" id="coinOverlay">
-    <div class="panel">
-      <h2>Münzwurf</h2>
-      <div class="coin-stage">
-        <div class="coin" id="coin">
-          <div class="coin-face coin-front">KOPF</div>
-          <div class="coin-face coin-back">ZAHL</div>
+  <div id="createFamilyBox" style="display:none;width:100%;max-width:380px">
+    <div class="setup-card">
+      <div class="setup-header"><div class="setup-title">Neue Familie</div><div class="setup-sub">Wähle einen Namen für eure Familie.</div></div>
+      <div class="login-field" style="border-bottom:none;padding:0 20px 20px">
+        <div class="lf-label">Familienname</div>
+        <input class="lf-input" id="family-name-input" type="text" placeholder="z.B. Familie Mäder" autocapitalize="words">
+      </div>
+    </div>
+    <button type="button" class="login-btn" id="btn-create-family" onclick="createFamily()">Familie erstellen</button>
+    <div id="create-family-err" class="login-err"></div>
+    <button type="button" class="login-link" onclick="document.getElementById('familyOptions').style.display='block';document.getElementById('createFamilyBox').style.display='none'">← Zurück</button>
+  </div>
+
+  <div id="joinFamilyBox" style="display:none;width:100%;max-width:380px">
+    <div class="setup-card">
+      <div class="setup-header"><div class="setup-title">Beitreten</div><div class="setup-sub">Gib den 6-stelligen Einladungscode ein.</div></div>
+      <div class="login-field" style="border-bottom:none;padding:0 20px 20px">
+        <input class="lf-input" id="invite-code-input" type="text" placeholder="ABC123" maxlength="6"
+          style="text-align:center;font-size:32px;letter-spacing:10px;font-weight:800;color:#60a5fa" autocapitalize="characters">
+      </div>
+    </div>
+    <button type="button" class="login-btn" id="btn-join-family" onclick="joinFamily()">Beitreten</button>
+    <div id="join-family-err" class="login-err"></div>
+    <button type="button" class="login-link" onclick="document.getElementById('familyOptions').style.display='block';document.getElementById('joinFamilyBox').style.display='none'">← Zurück</button>
+  </div>
+</div>
+
+<!-- ══════════════════ MONAT-AUSWAHL (Startseite nach Login) ══════════════════ -->
+<div id="monthSelectScreen" style="display:none;position:fixed;inset:0;background:var(--ios-bg);z-index:800;flex-direction:column;padding-top:var(--safe-top)">
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div style="max-width:480px;margin:0 auto;padding:24px 20px 40px;text-align:center">
+      <div style="width:64px;height:64px;background:#1a2744;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+        <svg width="34" height="34" viewBox="0 0 200 200"><polygon points="100,30 28,90 172,90" fill="#3b82f6"/><rect x="46" y="90" width="108" height="74" fill="#2563eb"/><rect x="76" y="112" width="48" height="52" fill="#1d3f8e"/></svg>
+      </div>
+      <div style="font-size:24px;font-weight:700;color:var(--ios-label);margin-bottom:4px">Willkommen zurück</div>
+      <div style="font-size:15px;color:var(--ios-label2);margin-bottom:28px" id="msFamilyName">Familie</div>
+
+      <div style="font-size:13px;font-weight:600;color:var(--ios-label2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;text-align:left">Welchen Monat möchtest du öffnen?</div>
+
+      <div class="year-nav" style="padding:0 0 8px">
+        <button class="year-nav-btn" onclick="msPy--;renderMonthSelect()">‹</button>
+        <div class="year-label" id="msPylbl">2026</div>
+        <button class="year-nav-btn" onclick="msPy++;renderMonthSelect()">›</button>
+      </div>
+      <div class="month-grid" id="msMgrid" style="padding:0 0 20px"></div>
+
+      <button class="login-btn" style="background:var(--ios-blue);max-width:none" onclick="confirmMonthSelect()">Öffnen →</button>
+      <button class="login-link" style="color:var(--ios-label2)" onclick="confirmMonthSelect(true)">Zum aktuellen Monat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MAIN APP ══════════════════ -->
+<div id="app">
+
+  <!-- Desktop nav tabs -->
+  <div class="desk-nav" id="deskNav">
+    <button class="desk-tab" onclick="goHome()" title="Zurück zur Monatsauswahl" style="font-size:16px">🏠</button>
+    <button class="desk-tab active" id="dt-dash" onclick="go('dash')">🏠 Übersicht</button>
+    <button class="desk-tab" id="dt-income" onclick="go('income')">📈 Einnahmen</button>
+    <button class="desk-tab" id="dt-expenses" onclick="go('expenses')">📉 Ausgaben</button>
+    <button class="desk-tab" id="dt-overview" onclick="go('overview')">📅 Jahresübersicht</button>
+    <button class="desk-tab" id="dt-recurring" onclick="go('recurring')">🔁 Daueraufträge</button>
+    <button class="desk-tab" id="dt-settings" onclick="go('settings')">⚙️ Einstellungen</button>
+    <button class="desk-tab" id="dt-help" onclick="go('help')">❓ Hilfe</button>
+    <div style="flex:1"></div>
+    <!-- Month control desktop -->
+    <div style="display:flex;align-items:center;gap:6px;padding:8px 0">
+      <button class="mon-arrow" onclick="step(-1)" style="font-size:16px">‹</button>
+      <button class="mon-pill" id="mnlbl" onclick="openPicker()" style="padding:4px 10px">
+        <span class="mon-pill-lbl" id="mnlbl-txt">Mai 2026</span>
+      </button>
+      <button class="mon-arrow" onclick="step(1)" style="font-size:16px">›</button>
+      <button class="today-pill" id="todayBtnDesktop" onclick="goToday()">Heute</button>
+    </div>
+    <span id="syncDot" class="sync-dot sync-saved" style="margin-right:8px;display:none"></span>
+  </div>
+
+  <!-- Scroll area -->
+  <div class="ios-scroll" id="mainScroll">
+    <div class="ios-content">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="page active" id="pg-dash">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <button class="ios-nav-btn" onclick="goHome()" title="Zurück zur Monatsauswahl">
+              <span style="font-size:20px">🏠</span>
+            </button>
+            <div class="ios-nav-title" id="brandFamily">FamilyBudget</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button class="today-pill" id="todayBtnMobile" onclick="goToday()">Heute</button>
+              <button class="mon-arrow" onclick="step(-1)" style="width:24px;height:24px;font-size:14px">‹</button>
+              <span style="font-size:13px;font-weight:600;color:var(--ios-label)" id="mnlbl2">Mai 2026</span>
+              <button class="mon-arrow" onclick="step(1)" style="width:24px;height:24px;font-size:14px">›</button>
+              <button style="background:none;border:none;font-size:20px;cursor:pointer;padding:2px" onclick="openPicker()">📅</button>
+            </div>
+          </div>
         </div>
+        <div class="ios-large-title" id="dtitle">Mai 2026</div>
+        <div id="dstatus-banner" style="margin:0 16px 4px;font-size:15px;color:var(--ios-label2)"></div>
+        <div id="dind-wrap"></div>
+        <div id="rec-auto-notice" style="display:none"></div>
+        <div id="rec-inc-notice" style="display:none"></div>
+        <div class="metric-grid" id="scards"></div>
+        <div id="personSplitCard" style="display:none">
+          <div style="margin:16px 16px 0;font-size:13px;font-weight:600;color:var(--ios-label2);text-transform:uppercase;letter-spacing:.5px">👥 Budget pro Person</div>
+          <div class="ios-list" style="margin-top:6px"><div id="personSplitList"></div></div>
+        </div>
+        <div class="chart-card" style="margin-top:16px">
+          <div class="chart-title">Ausgaben nach Kategorie</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="pieC"></canvas></div>
+          <div id="pieLeg" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:13px"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Einnahmen vs. Ausgaben</div>
+          <div class="chart-wrap" style="height:160px"><canvas id="barC"></canvas></div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header">Sparquote</div>
+          <div class="ios-list" style="padding:16px">
+            <div style="display:flex;align-items:center;gap:20px">
+              <svg viewBox="0 0 100 100" width="80" height="80" style="flex-shrink:0">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--ios-fill)" stroke-width="10"/>
+                <circle id="sarc" cx="50" cy="50" r="40" fill="none" stroke="#34c759" stroke-width="10"
+                  stroke-dasharray="0 251.2" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                <text id="spct" x="50" y="55" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ios-label)">0%</text>
+              </svg>
+              <div id="sdet" style="font-size:14px;color:var(--ios-label2);line-height:1.6"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header">Top Kategorien</div>
+          <div class="ios-list" style="padding:14px 16px"><div id="catprog"></div></div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header">Letzte Ausgaben</div>
+          <div class="ios-list"><div id="recent"></div></div>
+        </div>
+        <div style="height:20px"></div>
       </div>
-      <div class="tool-result" id="coinResult">&nbsp;</div>
-      <div class="panel-actions">
-        <button class="custom-btn" id="closeCoin">Schließen</button>
-        <button class="custom-btn roll-again" id="flipAgain">Nochmal werfen</button>
+
+      <!-- ── EINNAHMEN ── -->
+      <div class="page" id="pg-income">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <div style="width:60px"></div>
+            <div class="ios-nav-title">Einnahmen</div>
+            <button class="ios-nav-btn" onclick="tf('iform')">+ Neu</button>
+          </div>
+        </div>
+        <!-- Wiederkehrende Einnahmen summary -->
+        <div id="recIncSummaryCard" style="display:none">
+          <div class="ios-section">
+            <div class="ios-section-header" style="display:flex;align-items:center;justify-content:space-between">
+              <span>Wiederkehrend</span>
+              <button onclick="openRecIncModal(null)" style="background:none;border:none;color:var(--ios-blue);font-size:13px;cursor:pointer;font-family:inherit">+ Neu</button>
+            </div>
+            <div id="recIncList"></div>
+          </div>
+        </div>
+        <!-- Add form (hidden by default) -->
+        <div id="iform" style="display:none">
+          <div class="ios-section">
+            <div class="ios-section-header">Neue Einnahme</div>
+            <div class="ios-form">
+              <div class="ios-form-field">
+                <div class="ios-form-label">Datum</div>
+                <input type="date" class="ios-form-input" id="idate">
+              </div>
+              <div class="ios-form-field">
+                <div class="ios-form-label">Kategorie</div>
+                <select class="ios-form-select" id="ic"></select>
+              </div>
+              <div class="ios-form-field">
+                <div class="ios-form-label">Betrag CHF</div>
+                <input type="number" class="ios-form-input" id="ia" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+              </div>
+              <div class="ios-form-field">
+                <div class="ios-form-label">Notiz</div>
+                <input type="text" class="ios-form-input" id="inote" placeholder="Optional">
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin:10px 16px">
+              <button class="sheet-btn sheet-btn-green" style="margin:0;flex:1" onclick="addTxn('i')">✓ Speichern</button>
+              <button class="sheet-btn sheet-btn-gray" style="margin:0;flex:0 0 90px" onclick="tf('iform')">Abbrechen</button>
+            </div>
+          </div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header" id="ilbl">Einnahmen</div>
+          <div class="ios-list"><div id="inc-list"></div></div>
+        </div>
+        <div style="height:20px"></div>
       </div>
-    </div>
+
+      <!-- ── AUSGABEN ── -->
+      <div class="page" id="pg-expenses">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <div style="width:60px"></div>
+            <div class="ios-nav-title">Ausgaben</div>
+            <button class="ios-nav-btn" onclick="tf('eform')">+ Neu</button>
+          </div>
+        </div>
+        <!-- Search + filter -->
+        <div class="ios-search" style="margin:12px 16px 0">
+          <span class="ios-search-icon">🔍</span>
+          <input type="text" id="esrch" placeholder="Suchen…" oninput="rExp()">
+        </div>
+        <div style="padding:8px 16px 0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none">
+          <button id="efilt-all" class="rec-pill rec-pill-blue" onclick="setExpFilt('')">Alle</button>
+          <div id="efilt-pills" style="display:flex;gap:6px"></div>
+        </div>
+        <!-- Add form -->
+        <div id="eform" style="display:none">
+          <div class="ios-section">
+            <div class="ios-section-header">Neue Ausgabe</div>
+            <div class="ios-form">
+              <div class="ios-form-field">
+                <div class="ios-form-label">Datum</div>
+                <input type="date" class="ios-form-input" id="edate">
+              </div>
+              <div class="ios-form-field">
+                <div class="ios-form-label">Kategorie</div>
+                <select class="ios-form-select" id="ec"></select>
+              </div>
+              <div class="ios-form-field">
+                <div class="ios-form-label">Betrag CHF</div>
+                <input type="number" class="ios-form-input" id="ea" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+              </div>
+              <div class="ios-form-field">
+                <div class="ios-form-label">Zahlung</div>
+                <select class="ios-form-select" id="epay"></select>
+              </div>
+              <div class="ios-form-field">
+                <div class="ios-form-label">Notiz</div>
+                <input type="text" class="ios-form-input" id="enote" placeholder="Optional">
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin:10px 16px">
+              <button class="sheet-btn sheet-btn-red" style="margin:0;flex:1" onclick="addTxn('e')">✓ Speichern</button>
+              <button class="sheet-btn sheet-btn-gray" style="margin:0;flex:0 0 90px" onclick="tf('eform')">Abbrechen</button>
+            </div>
+          </div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header" id="elbl">Ausgaben</div>
+          <div class="ios-list"><div id="exp-list"></div></div>
+        </div>
+        <div style="height:20px"></div>
+      </div>
+
+      <!-- ── JAHRESÜBERSICHT ── -->
+      <div class="page" id="pg-overview">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <div style="width:60px"></div>
+            <div class="ios-nav-title">Jahresübersicht</div>
+            <div style="width:60px"></div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none" id="ytabs"></div>
+        <div class="chart-card"><div style="position:relative;height:200px"><canvas id="yrC"></canvas></div></div>
+        <div class="ios-section">
+          <div class="ios-section-header">Monatsdetails <span id="ovyrlbl"></span></div>
+          <div class="ios-list"><div id="ovrows"></div></div>
+        </div>
+        <div style="height:20px"></div>
+      </div>
+
+      <!-- ── STATISTIKEN ── -->
+      <div class="page" id="pg-stats">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <div style="width:60px"></div>
+            <div class="ios-nav-title">Statistiken</div>
+            <button class="ios-nav-btn" onclick="exportCSV()">CSV</button>
+          </div>
+        </div>
+        <div class="chart-card" style="margin-top:16px">
+          <div class="chart-title">Sparentwicklung <span id="slbl" style="font-size:13px;font-weight:400;color:var(--ios-label2)"></span></div>
+          <div style="position:relative;height:180px"><canvas id="savC"></canvas></div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header">Top Kategorien – <span id="stlbl"></span></div>
+          <div class="ios-list" style="padding:14px 16px"><div id="topcats"></div></div>
+        </div>
+        <div style="height:20px"></div>
+      </div>
+
+      <!-- ── DAUERAUFTRÄGE ── -->
+      <div class="page" id="pg-recurring">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <div style="width:60px"></div>
+            <div class="ios-nav-title">Daueraufträge</div>
+            <button class="ios-nav-btn" onclick="openRecModal(null)">+ Neu</button>
+          </div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Fällig in <span id="rec-month-lbl"></span></span>
+          </div>
+          <div id="rec-summary-ios" style="display:flex;gap:10px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none"></div>
+        </div>
+        <div id="rec-list" style="padding-bottom:8px"></div>
+        <div style="height:20px"></div>
+      </div>
+
+      <!-- ── EINSTELLUNGEN ── -->
+      <div class="page" id="pg-settings">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <div style="width:60px"></div>
+            <div class="ios-nav-title">Einstellungen</div>
+            <div style="width:60px"></div>
+          </div>
+        </div>
+        <!-- Personen -->
+        <div class="ios-section">
+          <div class="ios-section-header">👥 Personen & Budget-Aufteilung</div>
+          <div class="ios-list"><div id="personList"></div>
+            <div class="ios-row">
+              <input type="text" id="newPersonName" placeholder="Name hinzufügen…" onkeydown="if(event.key==='Enter')addPerson()"
+                style="flex:1;background:none;border:none;outline:none;font-size:17px;color:var(--ios-label);font-family:inherit">
+              <button onclick="addPerson()" style="color:var(--ios-blue);background:none;border:none;font-size:17px;font-weight:600;cursor:pointer;font-family:inherit">+</button>
+            </div>
+          </div>
+          <div class="ios-section-footer">Das Restbudget wird gleichmässig auf alle Personen aufgeteilt.</div>
+        </div>
+        <!-- Ausgaben Kategorien -->
+        <div class="ios-section">
+          <div class="ios-section-header">📉 Ausgaben-Kategorien</div>
+          <div class="ios-list"><div id="expCatList"></div>
+            <div class="ios-row" style="flex-direction:column;align-items:stretch;gap:10px;padding:12px 16px">
+              <div style="font-size:13px;font-weight:600;color:var(--ios-label2)">Symbol wählen</div>
+              <div id="emojiPickerExp" class="emoji-grid" style="padding:0"></div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span id="selEmojiExp" style="font-size:22px">🏠</span>
+                <input type="text" id="newExpCat" placeholder="Neue Kategorie…" onkeydown="if(event.key==='Enter')addCat('exp')"
+                  style="flex:1;background:none;border:none;border-bottom:1px solid var(--ios-sep);outline:none;font-size:17px;color:var(--ios-label);padding:6px 0;font-family:inherit">
+                <button onclick="addCat('exp')" style="color:var(--ios-blue);background:none;border:none;font-size:17px;font-weight:600;cursor:pointer;font-family:inherit">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Einnahmen Kategorien -->
+        <div class="ios-section">
+          <div class="ios-section-header">📈 Einnahmen-Kategorien</div>
+          <div class="ios-list"><div id="incCatList"></div>
+            <div class="ios-row" style="flex-direction:column;align-items:stretch;gap:10px;padding:12px 16px">
+              <div style="font-size:13px;font-weight:600;color:var(--ios-label2)">Symbol wählen</div>
+              <div id="emojiPickerInc" class="emoji-grid" style="padding:0"></div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span id="selEmojiInc" style="font-size:22px">💰</span>
+                <input type="text" id="newIncCat" placeholder="Neue Kategorie…" onkeydown="if(event.key==='Enter')addCat('inc')"
+                  style="flex:1;background:none;border:none;border-bottom:1px solid var(--ios-sep);outline:none;font-size:17px;color:var(--ios-label);padding:6px 0;font-family:inherit">
+                <button onclick="addCat('inc')" style="color:var(--ios-blue);background:none;border:none;font-size:17px;font-weight:600;cursor:pointer;font-family:inherit">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Zahlungsarten -->
+        <div class="ios-section">
+          <div class="ios-section-header">💳 Zahlungsarten</div>
+          <div class="ios-list"><div id="payList"></div>
+            <div class="ios-row">
+              <input type="text" id="newPay" placeholder="Neue Zahlungsart…" onkeydown="if(event.key==='Enter')addCat('pay')"
+                style="flex:1;background:none;border:none;outline:none;font-size:17px;color:var(--ios-label);font-family:inherit">
+              <button onclick="addCat('pay')" style="color:var(--ios-blue);background:none;border:none;font-size:17px;font-weight:600;cursor:pointer;font-family:inherit">+</button>
+            </div>
+          </div>
+        </div>
+        <!-- Konto -->
+        <div class="ios-section">
+          <div class="ios-section-header">Konto</div>
+          <div class="ios-list">
+            <div class="ios-row">
+              <div id="settingsAvatar" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0">?</div>
+              <div style="flex:1">
+                <div id="settingsEmail" style="font-size:16px;font-weight:600;color:var(--ios-label)"></div>
+                <div id="settingsFamilyName" style="font-size:13px;color:var(--ios-label2)"></div>
+              </div>
+              <span id="syncDotSettings" class="sync-dot sync-saved" style="display:none"></span>
+            </div>
+          </div>
+        </div>
+        <!-- Familie einladen -->
+        <div class="ios-section">
+          <div class="ios-section-header">👥 Familienmitglied einladen</div>
+          <div class="ios-list" style="padding:16px;text-align:center">
+            <div style="font-size:13px;font-weight:600;color:var(--ios-blue);margin-bottom:4px">Einladungscode</div>
+            <div class="invite-code-big" id="settingsInviteCode">——</div>
+            <button onclick="copyInviteCode()" style="background:var(--ios-blue);color:#fff;border:none;border-radius:10px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Kopieren</button>
+          </div>
+        </div>
+        <!-- Mitglieder -->
+        <div class="ios-section">
+          <div class="ios-section-header">Familienmitglieder</div>
+          <div class="ios-list"><div id="settingsMembersList"></div></div>
+        </div>
+        <!-- Familie wechseln -->
+        <div class="ios-section">
+          <div class="ios-list">
+            <div class="ios-row ios-row-tappable" onclick="switchFamily()">
+              <div class="ios-row-label">🔄 Familie wechseln</div>
+              <div class="ios-row-chevron">›</div>
+            </div>
+          </div>
+        </div>
+        <!-- Sync & Logout -->
+        <div class="ios-section">
+          <div class="ios-list">
+            <div class="ios-row ios-row-tappable" onclick="syncNow()">
+              <div class="ios-row-label">☁️ Jetzt synchronisieren</div>
+            </div>
+            <div class="ios-row ios-row-tappable" onclick="doLogout()">
+              <div class="ios-row-label" style="color:var(--ios-red)">🚪 Abmelden</div>
+            </div>
+          </div>
+        </div>
+        <!-- Sicherheit -->
+        <div class="ios-section">
+          <div class="ios-section-header">🔒 Sicherheit</div>
+          <div class="ios-list">
+            <div class="ios-row">
+              <div class="ios-row-label">Automatisch abmelden nach</div>
+              <select id="autoLogoutSelect" class="ios-form-select" style="flex:0 0 auto;width:auto" onchange="setAutoLogoutTime(this.value)">
+                <option value="0">Nie</option>
+                <option value="5">5 Minuten</option>
+                <option value="15">15 Minuten</option>
+                <option value="30">30 Minuten</option>
+                <option value="60">1 Stunde</option>
+                <option value="240">4 Stunden</option>
+              </select>
+            </div>
+          </div>
+          <div class="ios-section-footer">Nach Inaktivität wirst du automatisch ausgeloggt. Bei „Nie" bleibst du dauerhaft angemeldet.</div>
+        </div>
+        <div style="height:20px"></div>
+      </div>
+
+      <!-- ── HILFE ── -->
+      <div class="page" id="pg-help">
+        <div class="ios-nav">
+          <div class="ios-nav-bar">
+            <div style="width:60px"></div>
+            <div class="ios-nav-title">Hilfe</div>
+            <div style="width:60px"></div>
+          </div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header">Schnellstart</div>
+          <div class="ios-list">
+            <div class="help-row"><div class="help-icon">📈</div><div><div class="help-title">Einnahmen erfassen</div><div class="help-text">Tippe auf „+ Neu" oben rechts. Datum, Kategorie und Betrag eingeben — fertig.</div></div></div>
+            <div class="help-row"><div class="help-icon">📉</div><div><div class="help-title">Ausgaben erfassen</div><div class="help-text">Gleich wie Einnahmen, zusätzlich Zahlungsart wählen.</div></div></div>
+            <div class="help-row"><div class="help-icon">📅</div><div><div class="help-title">Monat wechseln</div><div class="help-text">Pfeile ‹ › in der Navigationsleiste oder auf den Monatsnamen tippen für den Monatspicker.</div></div></div>
+            <div class="help-row"><div class="help-icon">🎯</div><div><div class="help-title">Zum aktuellen Monat</div><div class="help-text">„Heute"-Button erscheint automatisch wenn du in einem anderen Monat bist.</div></div></div>
+          </div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header">Aktionen</div>
+          <div class="ios-list">
+            <div class="help-row"><div class="help-icon">✏️</div><div><div class="help-title">Bearbeiten</div><div class="help-text">Blauer Stift-Button rechts bei jedem Eintrag — öffnet Bearbeitungsformular.</div></div></div>
+            <div class="help-row"><div class="help-icon">❌</div><div><div class="help-title">Löschen</div><div class="help-text">Roter X-Button — unwiderruflich. Bitte sorgfältig tippen.</div></div></div>
+            <div class="help-row"><div class="help-icon">⚡</div><div><div class="help-title">Manuell buchen</div><div class="help-text">Bei Daueraufträgen — bucht den Eintrag sofort für den aktuellen Monat.</div></div></div>
+          </div>
+        </div>
+        <div class="ios-section">
+          <div class="ios-section-header">Familie & Synchronisation</div>
+          <div class="ios-list">
+            <div class="help-row"><div class="help-icon">🔗</div><div><div class="help-title">Familienmitglied einladen</div><div class="help-text">Avatar oben links → Einladungscode kopieren und teilen. Das Mitglied registriert sich und gibt den Code ein.</div></div></div>
+            <div class="help-row"><div class="help-icon">☁️</div><div><div class="help-title">Automatische Synchronisation</div><div class="help-text">Alle Änderungen werden sofort in der Cloud gespeichert — iPhone, MacBook, überall gleich.</div></div></div>
+          </div>
+        </div>
+        <div style="height:20px"></div>
+      </div>
+
+    </div><!-- /ios-content -->
+  </div><!-- /ios-scroll -->
+
+  <!-- BOTTOM TAB BAR (mobile) -->
+  <div class="ios-tab-bar">
+    <button class="ios-tab active" id="tab-dash" onclick="go('dash')">
+      <span class="ios-tab-icon">🏠</span><span class="ios-tab-label">Übersicht</span>
+    </button>
+    <button class="ios-tab" id="tab-income" onclick="go('income')">
+      <span class="ios-tab-icon">📈</span><span class="ios-tab-label">Einnahmen</span>
+    </button>
+    <button class="ios-tab" id="tab-expenses" onclick="go('expenses')">
+      <span class="ios-tab-icon">📉</span><span class="ios-tab-label">Ausgaben</span>
+    </button>
+    <button class="ios-tab" id="tab-recurring" onclick="go('recurring')">
+      <span class="ios-tab-icon">🔁</span><span class="ios-tab-label">Aufträge</span>
+    </button>
+    <button class="ios-tab" id="tab-settings" onclick="go('settings')">
+      <span class="ios-tab-icon">⚙️</span><span class="ios-tab-label">Mehr</span>
+    </button>
   </div>
 
-  <div class="overlay" id="keypadOverlay">
-    <div class="panel keypad-panel" id="keypadPanel">
-      <h2 id="keypadTitle">Eigener Wert</h2>
-      <div class="keypad-display" id="keypadDisplay">0</div>
-      <div class="keypad-grid">
-        <button class="keypad-key" data-k="1">1</button>
-        <button class="keypad-key" data-k="2">2</button>
-        <button class="keypad-key" data-k="3">3</button>
-        <button class="keypad-key" data-k="4">4</button>
-        <button class="keypad-key" data-k="5">5</button>
-        <button class="keypad-key" data-k="6">6</button>
-        <button class="keypad-key" data-k="7">7</button>
-        <button class="keypad-key" data-k="8">8</button>
-        <button class="keypad-key" data-k="9">9</button>
-        <button class="keypad-key" id="keypadClear">C</button>
-        <button class="keypad-key" data-k="0">0</button>
-        <button class="keypad-key" id="keypadBack">⌫</button>
-      </div>
-      <div class="panel-actions">
-        <button class="custom-btn" id="keypadMinus" style="border-color:var(--red); color:var(--red);">− Abziehen</button>
-        <button class="custom-btn" id="keypadPlus" style="border-color:var(--blue); color:var(--blue);">+ Hinzufügen</button>
-      </div>
-      <div class="panel-actions" style="margin-top:8px;">
-        <button class="custom-btn" id="keypadCancel">Abbrechen</button>
-      </div>
-    </div>
-  </div>
+</div><!-- /app -->
 
+<!-- ══ MODALS ══ -->
+
+<!-- Month Picker -->
+<div class="sheet-overlay" id="pickerOverlay" style="display:none" onclick="if(event.target===this)closePicker()">
+  <div class="sheet" style="max-width:440px">
+    <div class="sheet-handle"></div>
+    <div class="year-nav">
+      <button class="year-nav-btn" onclick="py--;renderPicker()">‹</button>
+      <div class="year-label" id="pylbl">2026</div>
+      <button class="year-nav-btn" onclick="py++;renderPicker()">›</button>
+    </div>
+    <div class="month-grid" id="mgrid"></div>
+    <button class="sheet-btn sheet-btn-gray" onclick="closePicker()">Schliessen</button>
+  </div>
 </div>
+
+<!-- Edit Income -->
+<div class="sheet-overlay" id="editIncOverlay" style="display:none" onclick="if(event.target===this)closeEditInc()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><div class="sheet-title">Einnahme bearbeiten</div><button class="sheet-close" onclick="closeEditInc()">✕</button></div>
+    <div class="ios-form" style="margin-top:8px">
+      <div class="ios-form-field"><div class="ios-form-label">Datum</div><input type="date" class="ios-form-input" id="ei-date"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Kategorie</div><select class="ios-form-select" id="ei-cat"></select></div>
+      <div class="ios-form-field"><div class="ios-form-label">Betrag CHF</div><input type="number" class="ios-form-input" id="ei-amount" step="0.01" inputmode="decimal"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Notiz</div><input type="text" class="ios-form-input" id="ei-note"></div>
+    </div>
+    <input type="hidden" id="ei-id">
+    <button class="sheet-btn sheet-btn-green" onclick="saveEditInc()">✓ Speichern</button>
+    <button class="sheet-btn sheet-btn-gray" onclick="closeEditInc()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Edit Expense -->
+<div class="sheet-overlay" id="editExpOverlay" style="display:none" onclick="if(event.target===this)closeEditExp()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><div class="sheet-title">Ausgabe bearbeiten</div><button class="sheet-close" onclick="closeEditExp()">✕</button></div>
+    <div class="ios-form" style="margin-top:8px">
+      <div class="ios-form-field"><div class="ios-form-label">Datum</div><input type="date" class="ios-form-input" id="ee-date"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Kategorie</div><select class="ios-form-select" id="ee-cat"></select></div>
+      <div class="ios-form-field"><div class="ios-form-label">Betrag CHF</div><input type="number" class="ios-form-input" id="ee-amount" step="0.01" inputmode="decimal"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Zahlung</div><select class="ios-form-select" id="ee-pay"></select></div>
+      <div class="ios-form-field"><div class="ios-form-label">Notiz</div><input type="text" class="ios-form-input" id="ee-note"></div>
+    </div>
+    <input type="hidden" id="ee-id">
+    <button class="sheet-btn sheet-btn-red" onclick="saveEditExp()">✓ Speichern</button>
+    <button class="sheet-btn sheet-btn-gray" onclick="closeEditExp()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Recurring Expense Modal -->
+<div class="sheet-overlay" id="recOverlay" style="display:none" onclick="if(event.target===this)closeRecModal()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><div class="sheet-title" id="recModalTitle">Neuer Dauerauftrag</div><button class="sheet-close" onclick="closeRecModal()">✕</button></div>
+    <div class="ios-form" style="margin-top:8px">
+      <div class="ios-form-field"><div class="ios-form-label">Name</div><input type="text" class="ios-form-input" id="r-name" placeholder="z.B. Miete"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Betrag CHF</div><input type="number" class="ios-form-input" id="r-amount" step="0.01" inputmode="decimal"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Kategorie</div><select class="ios-form-select" id="r-cat"></select></div>
+      <div class="ios-form-field"><div class="ios-form-label">Tag des Monats</div><input type="number" class="ios-form-input" id="r-day" min="1" max="31" value="1" inputmode="numeric"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Zahlung</div><select class="ios-form-select" id="r-pay"></select></div>
+      <div class="ios-form-field"><div class="ios-form-label">Intervall</div>
+        <select class="ios-form-select" id="r-interval">
+          <option value="monthly">Monatlich</option><option value="quarterly">Quartalsweise</option>
+          <option value="biannual">Halbjährlich</option><option value="yearly">Jährlich</option>
+        </select>
+      </div>
+      <div class="ios-form-field"><div class="ios-form-label">Gültig ab</div><input type="month" class="ios-form-input" id="r-from"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Gültig bis</div><input type="month" class="ios-form-input" id="r-until" placeholder="Unbegrenzt"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Notiz</div><input type="text" class="ios-form-input" id="r-note" placeholder="Optional"></div>
+    </div>
+    <input type="hidden" id="r-edit-id">
+    <button class="sheet-btn sheet-btn-blue" onclick="saveRec()">✓ Speichern</button>
+    <button class="sheet-btn sheet-btn-gray" onclick="closeRecModal()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- Recurring Income Modal -->
+<div class="sheet-overlay" id="recIncOverlay" style="display:none" onclick="if(event.target===this)closeRecIncModal()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><div class="sheet-title" id="recIncModalTitle">Wiederkehrende Einnahme</div><button class="sheet-close" onclick="closeRecIncModal()">✕</button></div>
+    <div class="ios-form" style="margin-top:8px">
+      <div class="ios-form-field"><div class="ios-form-label">Name</div><input type="text" class="ios-form-input" id="ri-name" placeholder="z.B. Lohn Ermir"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Betrag CHF</div><input type="number" class="ios-form-input" id="ri-amount" step="0.01" inputmode="decimal"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Kategorie</div><select class="ios-form-select" id="ri-cat"></select></div>
+      <div class="ios-form-field"><div class="ios-form-label">Tag des Monats</div><input type="number" class="ios-form-input" id="ri-day" min="1" max="31" value="1" inputmode="numeric"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Intervall</div>
+        <select class="ios-form-select" id="ri-interval">
+          <option value="monthly">Monatlich</option><option value="quarterly">Quartalsweise</option>
+          <option value="biannual">Halbjährlich</option><option value="yearly">Jährlich</option>
+        </select>
+      </div>
+      <div class="ios-form-field"><div class="ios-form-label">Gültig ab</div><input type="month" class="ios-form-input" id="ri-from"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Gültig bis</div><input type="month" class="ios-form-input" id="ri-until" placeholder="Unbegrenzt"></div>
+      <div class="ios-form-field"><div class="ios-form-label">Notiz</div><input type="text" class="ios-form-input" id="ri-note" placeholder="Optional"></div>
+    </div>
+    <input type="hidden" id="ri-edit-id">
+    <button class="sheet-btn sheet-btn-green" onclick="saveRecInc()">✓ Speichern</button>
+    <button class="sheet-btn sheet-btn-gray" onclick="closeRecIncModal()">Abbrechen</button>
+  </div>
+</div>
+
+<div class="ios-toast" id="toastEl"></div>
+
 <script>
-  // Übersetzung von "Lebenspunktezähler" je nach Gerätesprache
-  const lpCounterTranslations = {
-    de: 'Lebenspunktezähler',
-    en: 'Life Points Counter',
-    fr: 'Compteur de Points de Vie',
-    es: 'Contador de Puntos de Vida',
-    it: 'Contatore Punti Vita',
-    pt: 'Contador de Pontos de Vida',
-    nl: 'Levenspuntenteller',
-    pl: 'Licznik Punktów Życia',
-    tr: 'Yaşam Puanı Sayacı',
-    ru: 'Счётчик очков жизни',
-    ja: 'ライフポイントカウンター',
-    ko: '라이프 포인트 카운터',
-    zh: '生命点数计数器'
-  };
-  (function applyLocalizedLabel(){
-    const rawLang = (navigator.language || 'de').toLowerCase();
-    const shortLang = rawLang.split('-')[0];
-    const label = lpCounterTranslations[shortLang] || lpCounterTranslations.en;
-    const introSubEl = document.getElementById('introSub');
-    if(introSubEl) introSubEl.textContent = label;
-    document.title = 'Yu-Gi-Oh ' + label;
-  })();
 
-  // Intro-Splash: Beschwörungskreis-Punkte erzeugen, nach 3s ausblenden, per Klick überspringbar
-  (function(){
-    const glyphWrap = document.getElementById('introGlyphs');
-    const dotCount = 10;
-    for(let i = 0; i < dotCount; i++){
-      const dot = document.createElement('div');
-      const angle = (i / dotCount) * 2 * Math.PI;
-      const radius = 48; // percent-based via transform below
-      dot.style.left = (50 + Math.cos(angle) * radius) + '%';
-      dot.style.top = (50 + Math.sin(angle) * radius) + '%';
-      glyphWrap.appendChild(dot);
-    }
+'use strict';
+// ═══════════════════════════════════════════════════════════
+// SUPABASE INIT
+// ═══════════════════════════════════════════════════════════
+const SUPA_URL = 'https://azzrtusnfxiraerdmfkm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6enJ0dXNuZnhpcmFlcmRtZmttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0Nzg1MjAsImV4cCI6MjA5OTA1NDUyMH0.gYoqkgBYQyeoTbM638ct1pUiX2KC5oBJkGqdlczv6j0';
+const { createClient } = supabase;
+const sb = createClient(SUPA_URL, SUPA_KEY);
 
-    const intro = document.getElementById('intro');
-    let dismissed = false;
-    function dismiss(){
-      if(dismissed) return;
-      dismissed = true;
-      intro.classList.add('hide');
-      setTimeout(()=> intro.remove(), 750);
-    }
-    setTimeout(dismiss, 3000);
-    intro.addEventListener('click', dismiss);
-  })();
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+const MN=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const MS=['Jan','Feb','Mrz','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const CC={Miete:'#3b82f6',Lebensmittel:'#16a34a',Versicherungen:'#8b5cf6',Auto:'#f59e0b',Streaming:'#ec4899',Freizeit:'#14b8a6',Ferien:'#f97316',Kleidung:'#6366f1',Gesundheit:'#10b981',Sonstige:'#6b7280',Lohn:'#15803d',Kinderzulagen:'#2563eb',Nebenverdienst:'#7c3aed',Rente:'#b45309',Bonus:'#0891b2'};
+const CI={Miete:'ti-building',Lebensmittel:'ti-shopping-cart',Versicherungen:'ti-shield',Auto:'ti-car',Streaming:'ti-device-tv',Freizeit:'ti-confetti',Ferien:'ti-plane',Kleidung:'ti-shirt',Gesundheit:'ti-heart',Sonstige:'ti-dots',Lohn:'ti-briefcase',Kinderzulagen:'ti-baby-carriage',Nebenverdienst:'ti-coin',Rente:'ti-piggy-bank',Bonus:'ti-star'};
+const INTERVAL_LABEL={monthly:'Monatlich',quarterly:'Quartalsweise',biannual:'Halbjährlich',yearly:'Jährlich'};
+const AVATAR_COLORS=['#3b82f6','#8b5cf6','#ec4899','#16a34a','#f59e0b','#0891b2'];
 
-  // Bildschirm-Sperre verhindern, solange die App aktiv ist — über einen
-  // sichtbaren Button, der eine echte Nutzeraktion auslöst (auf iOS am
-  // zuverlässigsten) und sich auch wieder deaktivieren lässt.
-  let wakeLock = null;
-  let wakeDesired = false; // true = Nutzer hat den Button aktiv angeschaltet
-  const wakeLockSupported = 'wakeLock' in navigator;
-  const wakeBtn = document.getElementById('wakeBtn');
+// Default categories with emojis
+const DEF_EXP_CATS=[
+  {n:'Miete',e:'🏠'},{n:'Lebensmittel',e:'🛒'},{n:'Versicherungen',e:'🛡️'},
+  {n:'Auto',e:'🚗'},{n:'Streaming',e:'📺'},{n:'Freizeit',e:'🎉'},
+  {n:'Ferien',e:'✈️'},{n:'Kleidung',e:'👕'},{n:'Gesundheit',e:'❤️'},{n:'Sonstige',e:'📦'}
+];
+const DEF_INC_CATS=[
+  {n:'Lohn',e:'💼'},{n:'Kinderzulagen',e:'👶'},{n:'Nebenverdienst',e:'💰'},
+  {n:'Rente',e:'🏦'},{n:'Bonus',e:'⭐'}
+];
+const DEF_PAY=['Banküberweisung','Kreditkarte','Bar','TWINT'];
+// CATS stores objects {n: name, e: emoji} for exp/inc, strings for pay
+let CATS={exp:[...DEF_EXP_CATS],inc:[...DEF_INC_CATS],pay:[...DEF_PAY]};
 
-  function setWakeStatus(state, icon){
-    wakeBtn.classList.toggle('active', state === 'active');
-    wakeBtn.classList.toggle('error', state === 'error');
-    wakeBtn.textContent = icon;
+// All available emojis for picker
+const ALL_EMOJIS=['🏠','🛒','🛡️','🚗','📺','🎉','✈️','👕','❤️','📦','💼','👶','💰','🏦','⭐',
+  '🍕','☕','🎓','💡','🏋️','🎮','🎵','📱','💻','🏥','🐕','🌿','🎁','🛁','⚡',
+  '🚌','🚂','🏪','🍔','🎭','📚','🔧','💈','🌊','🏔️','🎂','🥗','🍷','🎸','🏡'];
+
+let selEmoji={exp:'🏠',inc:'💰'};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let D={}, REC=[], REC_INC=[], PERSONS=[];
+let cy=new Date().getFullYear(), cm=new Date().getMonth()+1, py=cy, ap='dash';
+let pC,bC,sC,yrC;
+let currentUser=null, currentProfile=null, currentFamily=null;
+let saveTimer=null;
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+async function doLogin(){
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('btn-login');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='Bitte alle Felder ausfüllen.';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Wird angemeldet…';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='Anmelden →';
+  if(error){err.textContent=error.message==='Invalid login credentials'?'Falsche E-Mail oder Passwort.':error.message;err.style.display='block';return;}
+  await onLogin(data.user);
+}
+
+async function doRegister(){
+  const email=document.getElementById('r-email').value.trim();
+  const pass=document.getElementById('r-pass').value;
+  const err=document.getElementById('register-err');
+  const ok=document.getElementById('register-ok');
+  const btn=document.getElementById('btn-register');
+  err.style.display='none';ok.style.display='none';
+  if(!email||!pass){err.textContent='Bitte alle Felder ausfüllen.';err.style.display='block';return;}
+  if(pass.length<6){err.textContent='Passwort mindestens 6 Zeichen.';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Wird registriert…';
+  const {data,error}=await sb.auth.signUp({email,password:pass});
+  btn.disabled=false;btn.textContent='Konto erstellen →';
+  if(error){err.textContent=error.message;err.style.display='block';return;}
+  if(data.user&&!data.session){
+    ok.textContent='✓ Bestätigungs-E-Mail gesendet! Bitte prüfe dein Postfach.';ok.style.display='block';return;
   }
+  await onLogin(data.user);
+}
 
-  async function requestWakeLock(){
-    if(!wakeLockSupported){
-      setWakeStatus('error', '⚠');
-      return false;
-    }
-    try{
-      if(wakeLock && !wakeLock.released) return true;
-      wakeLock = await navigator.wakeLock.request('screen');
-      setWakeStatus('active', '☀');
-      wakeLock.addEventListener('release', ()=>{
-        wakeLock = null;
-        if(wakeDesired) setWakeStatus('error', '⚠');
-        else setWakeStatus('', '☀');
-      });
-      return true;
-    }catch(err){
-      wakeLock = null;
-      setWakeStatus('error', '⚠');
-      return false;
-    }
+async function onLogin(user){
+  currentUser=user;
+  hideSplash();
+  document.getElementById('loginScreen').style.display='none';
+  // Load profile
+  const {data:profile}=await sb.from('profiles').select('*,families(*)').eq('id',user.id).single();
+  if(profile){
+    currentProfile=profile;
+    currentFamily=profile.families;
+    await loadAllData();
+    showApp();
+  } else {
+    showFamilySetup();
   }
+}
 
-  async function releaseWakeLock(){
-    if(wakeLock){
-      try{ await wakeLock.release(); }catch(e){}
-      wakeLock = null;
-    }
-    setWakeStatus('', '☀');
+async function doLogout(){
+  if(typeof closeUserMenu==="function")closeUserMenu();
+  stopInactivityTimer();
+  await sb.auth.signOut();
+  currentUser=null;currentProfile=null;currentFamily=null;D={};REC=[];
+  document.getElementById('app').style.display='none';
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('monthSelectScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+}
+
+function switchTab(t){
+  document.getElementById('ltab-login').classList.toggle('active',t==='login');
+  document.getElementById('ltab-register').classList.toggle('active',t==='register');
+  document.getElementById('form-login').style.display=t==='login'?'block':'none';
+  document.getElementById('form-register').style.display=t==='register'?'block':'none';
+  document.getElementById('form-reset').style.display=t==='reset'?'block':'none';
+}
+
+async function doReset(){
+  const email=document.getElementById('reset-email').value.trim();
+  const err=document.getElementById('reset-err');
+  const ok=document.getElementById('reset-ok');
+  const btn=document.getElementById('btn-reset');
+  err.style.display='none';ok.style.display='none';
+  if(!email){err.textContent='Bitte E-Mail eingeben.';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Wird gesendet…';
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+  btn.disabled=false;btn.textContent='Link senden →';
+  if(error){err.textContent=error.message;err.style.display='block';return;}
+  ok.textContent='✓ E-Mail gesendet! Prüfe deinen Posteingang.';ok.style.display='block';
+}
+
+async function switchFamily(){
+  if(typeof closeUserMenu==="function")closeUserMenu();
+  if(!confirm('Familie wechseln? Du verlässt die aktuelle Familie und kannst einer neuen beitreten oder eine neue erstellen.')) return;
+  // Remove family_id from profile
+  await sb.from('profiles').update({family_id:null}).eq('id',currentUser.id);
+  currentProfile=null;currentFamily=null;D={};REC=[];
+  document.getElementById('app').style.display='none';
+  document.getElementById('app').classList.remove('visible');
+  // Reset family screen
+  document.getElementById('familyOptions').style.display='block';
+  document.getElementById('createFamilyBox').style.display='none';
+  document.getElementById('joinFamilyBox').style.display='none';
+  showFamilySetup();
+}
+
+// ═══════════════════════════════════════════════════════════
+// FAMILY SETUP
+// ═══════════════════════════════════════════════════════════
+function showFamilySetup(){
+  document.getElementById('familyScreen').style.display='flex';
+}
+function showCreateFamily(){
+  document.getElementById('familyOptions').style.display='none';
+  document.getElementById('createFamilyBox').style.display='block';
+  setTimeout(()=>document.getElementById('family-name-input').focus(),100);
+}
+function showJoinFamily(){
+  document.getElementById('familyOptions').style.display='none';
+  document.getElementById('joinFamilyBox').style.display='block';
+  setTimeout(()=>document.getElementById('invite-code-input').focus(),100);
+}
+
+async function createFamily(){
+  const name=document.getElementById('family-name-input').value.trim();
+  const err=document.getElementById('create-family-err');
+  const btn=document.getElementById('btn-create-family');
+  err.style.display='none';
+  if(!name){err.textContent='Bitte einen Familiennamen eingeben.';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Wird erstellt…';
+  // Create family
+  const {data:fam,error:famErr}=await sb.from('families').insert({name}).select().single();
+  if(famErr){err.textContent=famErr.message;err.style.display='block';btn.disabled=false;btn.textContent='Familie erstellen →';return;}
+  // Create profile
+  const email=currentUser.email;
+  const username=email.split('@')[0];
+  const {data:prof,error:profErr}=await sb.from('profiles').insert({id:currentUser.id,username,family_id:fam.id,role:'admin'}).select('*,families(*)').single();
+  if(profErr){err.textContent=profErr.message;err.style.display='block';btn.disabled=false;btn.textContent='Familie erstellen →';return;}
+  currentProfile=prof;currentFamily=fam;
+  document.getElementById('familyScreen').style.display='none';
+  await loadAllData();
+  showApp();
+}
+
+async function joinFamily(){
+  const code=document.getElementById('invite-code-input').value.trim().toUpperCase();
+  const err=document.getElementById('join-family-err');
+  const btn=document.getElementById('btn-join-family');
+  err.style.display='none';
+  if(code.length!==6){err.textContent='Bitte einen 6-stelligen Code eingeben.';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Wird gesucht…';
+  const {data:fam,error:famErr}=await sb.from('families').select('*').eq('invite_code',code).single();
+  if(famErr||!fam){err.textContent='Code nicht gefunden. Bitte prüfe den Code.';err.style.display='block';btn.disabled=false;btn.textContent='Beitreten →';return;}
+  const email=currentUser.email;
+  const username=email.split('@')[0];
+  const {data:prof,error:profErr}=await sb.from('profiles').insert({id:currentUser.id,username,family_id:fam.id,role:'member'}).select('*,families(*)').single();
+  if(profErr){err.textContent=profErr.message;err.style.display='block';btn.disabled=false;btn.textContent='Beitreten →';return;}
+  currentProfile=prof;currentFamily=fam;
+  document.getElementById('familyScreen').style.display='none';
+  await loadAllData();
+  showApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA LOAD / SAVE (Supabase)
+// ═══════════════════════════════════════════════════════════
+async function loadAllData(){
+  if(!currentFamily) return;
+  const fid=currentFamily.id;
+  // Load all month data
+  const {data:rows}=await sb.from('budget_data').select('*').eq('family_id',fid);
+  D={};
+  (rows||[]).forEach(r=>{ if(r.month_key!=='__settings__') D[r.month_key]=r.data; });
+  // Load recurring
+  const {data:rec}=await sb.from('recurring').select('*').eq('family_id',fid).single();
+  REC=rec?.data?.rec||rec?.data||[];
+  REC_INC=rec?.data?.recInc||[];
+  PERSONS=rec?.data?.persons||[];
+  // Load categories
+  const catRow=(rows||[]).find(r=>r.month_key==='__settings__');
+  if(catRow?.data?.cats){
+    const loaded=catRow.data.cats;
+    // Normalize: convert old string format to new object format
+    CATS={
+      exp:(loaded.exp||[]).map(c=>typeof c==='string'?{n:c,e:'📦'}:c),
+      inc:(loaded.inc||[]).map(c=>typeof c==='string'?{n:c,e:'💰'}:c),
+      pay:loaded.pay||[...DEF_PAY]
+    };
   }
+}
 
-  wakeBtn.addEventListener('click', ()=>{
-    if(wakeDesired){
-      wakeDesired = false;
-      releaseWakeLock();
+async function saveMonthData(key){
+  if(!currentFamily) return;
+  showSyncPill('saving');
+  const {error}=await sb.from('budget_data').upsert({family_id:currentFamily.id,month_key:key,data:D[key]||{income:[],expenses:[]},updated_at:new Date().toISOString()},{onConflict:'family_id,month_key'});
+  if(error){showSyncPill('error');return;}
+  showSyncPill('saved');
+}
+
+async function saveCats(){
+  if(!currentFamily) return;
+  showSyncPill('saving');
+  const {error}=await sb.from('budget_data').upsert({family_id:currentFamily.id,month_key:'__settings__',data:{cats:CATS},updated_at:new Date().toISOString()},{onConflict:'family_id,month_key'});
+  if(error){showSyncPill('error');return;}
+  showSyncPill('saved');
+}
+
+async function saveRecurring(){
+  if(!currentFamily) return;
+  showSyncPill('saving');
+  const {error}=await sb.from('recurring').upsert({family_id:currentFamily.id,data:{rec:REC,recInc:REC_INC,persons:PERSONS},updated_at:new Date().toISOString()},{onConflict:'family_id'});
+  if(error){showSyncPill('error');return;}
+  showSyncPill('saved');
+}
+
+function save(isRec=false){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    if(isRec) await saveRecurring();
+    else await saveMonthData(ck());
+  },800);
+}
+
+function showSyncPill(state){
+  const dot=document.getElementById('syncDot');
+  if(dot){
+    dot.style.display='inline-block';
+    dot.className='sync-dot sync-'+state;
+    if(state==='saved')setTimeout(()=>{dot.style.display='none'},3000);
+  }
+  const dot2=document.getElementById('syncDotSettings');
+  if(dot2){
+    dot2.style.display='inline-block';
+    dot2.className='sync-dot sync-'+state;
+    if(state==='saved')setTimeout(()=>{dot2.style.display='none'},3000);
+  }
+}
+
+async function syncNow(){
+  if(typeof closeUserMenu==="function")closeUserMenu();
+  showSyncPill('saving');
+  await loadAllData();
+  showSyncPill('saved');
+  render(ap);
+  toast('Daten synchronisiert ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHOW APP
+// ═══════════════════════════════════════════════════════════
+function showApp(){
+  const app=document.getElementById('app');
+  // brandFamily wird beim Dashboard-Rendering aktualisiert (siehe rDash)
+  // Show month selection screen instead of jumping straight to dashboard
+  showMonthSelect();
+  startInactivityTimer();
+}
+
+function enterApp(){
+  const app=document.getElementById('app');
+  app.style.display='flex';app.classList.add('visible');
+  document.getElementById('monthSelectScreen').style.display='none';
+  updMon();rDash();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MONAT-AUSWAHL STARTSEITE
+// ═══════════════════════════════════════════════════════════
+let msPy=cy, msSelM=cm, msSelY=cy;
+function showMonthSelect(){
+  document.getElementById('msFamilyName').textContent=currentFamily?.name||'';
+  msPy=cy; msSelM=cm; msSelY=cy;
+  renderMonthSelect();
+  document.getElementById('monthSelectScreen').style.display='flex';
+}
+function renderMonthSelect(){
+  document.getElementById('msPylbl').textContent=msPy;
+  document.getElementById('msMgrid').innerHTML=MN.map((n,i)=>{
+    const m=i+1,k=mk(msPy,m);
+    const has=D[k]&&(D[k].income.length>0||D[k].expenses.length>0);
+    const sel=msPy===msSelY&&m===msSelM;
+    return `<button class="month-cell ${sel?'sel':has?'has':''}" onclick="msSelY=${msPy};msSelM=${m};renderMonthSelect()">${MS[i]}</button>`;
+  }).join('');
+}
+function confirmMonthSelect(useToday){
+  if(useToday){
+    const now=new Date(); cy=now.getFullYear(); cm=now.getMonth()+1;
+  } else {
+    cy=msSelY; cm=msSelM;
+  }
+  enterApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTO-LOGOUT BEI INAKTIVITÄT
+// ═══════════════════════════════════════════════════════════
+let inactivityTimer=null;
+let autoLogoutMinutes=0; // 0 = deaktiviert
+
+function getAutoLogoutTime(){
+  try{ return parseInt(localStorage.getItem('fb_auto_logout_min')||'0'); }catch{ return 0; }
+}
+function setAutoLogoutTime(minutes){
+  autoLogoutMinutes=parseInt(minutes)||0;
+  try{ localStorage.setItem('fb_auto_logout_min', String(autoLogoutMinutes)); }catch{}
+  resetInactivityTimer();
+  toast(autoLogoutMinutes===0?'Automatische Abmeldung deaktiviert':`Automatische Abmeldung nach ${minutes} Min. aktiviert`);
+}
+function startInactivityTimer(){
+  autoLogoutMinutes=getAutoLogoutTime();
+  const sel=document.getElementById('autoLogoutSelect');
+  if(sel) sel.value=String(autoLogoutMinutes);
+  resetInactivityTimer();
+  ['click','touchstart','keydown','mousemove','scroll'].forEach(evt=>{
+    document.addEventListener(evt, resetInactivityTimer, {passive:true});
+  });
+}
+function resetInactivityTimer(){
+  clearTimeout(inactivityTimer);
+  if(!autoLogoutMinutes || autoLogoutMinutes<=0) return;
+  inactivityTimer=setTimeout(()=>{
+    if(currentUser){
+      toast('Automatisch abgemeldet wegen Inaktivität');
+      setTimeout(()=>doLogout(),1200);
+    }
+  }, autoLogoutMinutes*60*1000);
+}
+function stopInactivityTimer(){
+  clearTimeout(inactivityTimer);
+}
+
+function hideSplash(){document.getElementById('splash').style.display='none';}
+
+
+
+// ═══════════════════════════════════════════════════════════
+// HAMBURGER MENU (mobile)
+// ═══════════════════════════════════════════════════════════
+function openHam(){
+  const el=document.getElementById('hamMenu'); if(!el)return;
+  el.classList.add('open');
+  document.getElementById('hamFamilyLbl').textContent=currentFamily?.name||'';
+  updateHamMon();
+}
+function closeHam(){ document.getElementById('hamMenu').classList.remove('open'); }
+function updateHamMon(){ const el=document.getElementById('hamMonLbl'); if(el) el.textContent=MS[cm-1]+' '+cy; }
+function hamGo(p){
+  closeHam();
+  go(p);
+  document.querySelectorAll('.ham-item').forEach(x=>x.classList.remove('active'));
+  const el=document.getElementById('hm-'+p); if(el) el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════
+// USER MENU
+// ═══════════════════════════════════════════════════════════
+async function populateAccountSettings(){
+  if(!currentUser||!currentFamily) return;
+  const email=currentUser.email||'';
+  const initial=email[0]?.toUpperCase()||'?';
+  const colorIdx=email.charCodeAt(0)%AVATAR_COLORS.length;
+  const color=AVATAR_COLORS[colorIdx];
+  const av=document.getElementById('settingsAvatar');
+  if(av){av.style.background=color+'22';av.style.color=color;av.textContent=initial;}
+  const emailEl=document.getElementById('settingsEmail');if(emailEl)emailEl.textContent=email;
+  const famEl=document.getElementById('settingsFamilyName');if(famEl)famEl.textContent=currentFamily?.name||'';
+  const codeEl=document.getElementById('settingsInviteCode');if(codeEl)codeEl.textContent=currentFamily?.invite_code||'——';
+  // Load members
+  const {data:members}=await sb.from('profiles').select('*').eq('family_id',currentFamily.id);
+  const listEl=document.getElementById('settingsMembersList');
+  if(listEl) listEl.innerHTML=(members||[]).map(m=>{
+    const c=AVATAR_COLORS[m.username?.charCodeAt(0)%AVATAR_COLORS.length||0];
+    return `<div class="member-row">
+      <div style="width:38px;height:38px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${(m.username||'?')[0].toUpperCase()}</div>
+      <div style="flex:1"><div style="font-size:16px;font-weight:500;color:var(--ios-label)">${m.username||'Unbekannt'}</div><div style="font-size:13px;color:var(--ios-label2)">${m.role==='admin'?'Administrator':'Mitglied'}</div></div>
+      ${m.id===currentUser.id?'<span class="ios-badge ios-badge-blue">Du</span>':''}
+    </div>`;
+  }).join('');
+}
+// Home button — returns to month selection screen
+function goHome(){
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('app').style.display='none';
+  showMonthSelect();
+}
+
+
+async function copyInviteCode(){
+  const code=currentFamily?.invite_code||'';
+  try{await navigator.clipboard.writeText(code);}catch{const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);}
+  toast(`Code "${code}" kopiert!`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+const mk=(y,m)=>`${y}-${String(m).padStart(2,'0')}`;
+const ck=()=>mk(cy,cm);
+const md=()=>D[ck()]||{income:[],expenses:[]};
+const lbl=()=>MN[cm-1]+' '+cy;
+const fmt=v=>'CHF '+Number(v).toLocaleString('de-CH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fd=d=>{if(!d)return'';const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0];};
+// Normalize category — always returns string name
+function catN(c){ return typeof c==='object'?c.n:c; }
+// Get emoji for a category name
+function catEmoji(name){
+  const n=catN(name);
+  const all=[...CATS.exp,...CATS.inc];
+  const found=all.find(c=>catN(c)===n);
+  return found&&typeof found==='object'?found.e:'';
+}
+function catColor(name){return CC[catN(name)]||'#6b7280';}
+function ensure(k){if(!D[k])D[k]={income:[],expenses:[]};}
+function ttl(k){const d=D[k]||{income:[],expenses:[]};const i=d.income.reduce((a,x)=>a+x.amount,0);const e=d.expenses.reduce((a,x)=>a+x.amount,0);return{i,e,r:i-e,s:Math.max(0,i-e)};}
+
+// ═══════════════════════════════════════════════════════════
+// RECURRING
+// ═══════════════════════════════════════════════════════════
+function recDueInMonth(r,y,m){
+  if(!r.active)return false;
+  if(r.from&&mk(y,m)<r.from)return false;
+  if(r.until&&mk(y,m)>r.until)return false;
+  if(r.interval==='monthly')return true;
+  const[fy,fm]=r.from.split('-').map(Number);
+  const diff=(y-fy)*12+(m-fm);
+  if(r.interval==='quarterly')return diff%3===0;
+  if(r.interval==='biannual')return diff%6===0;
+  if(r.interval==='yearly')return diff%12===0;
+  return false;
+}
+function recAlreadyBooked(r,y,m){const d=D[mk(y,m)]||{expenses:[]};return d.expenses.some(e=>e.recId===r.id);}
+function autoBookRecurring(){
+  const k=ck();ensure(k);let booked=[];
+  REC.forEach(r=>{
+    if(!r.active)return;if(r.skipped&&r.skipped.includes(k))return;
+    if(!recDueInMonth(r,cy,cm))return;if(recAlreadyBooked(r,cy,cm))return;
+    const day=Math.min(r.day,new Date(cy,cm,0).getDate());
+    const date=`${cy}-${String(cm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    D[k].expenses.push({id:Date.now()+Math.random(),date,cat:r.cat,amount:r.amount,pay:r.pay,note:r.note||r.name,recId:r.id,recName:r.name});
+    booked.push(r.name);
+  });
+  if(booked.length){save();return booked;}return[];
+}
+function skipRec(rid){
+  const k=ck(),r=REC.find(x=>x.id===rid);if(!r)return;
+  if(!r.skipped)r.skipped=[];
+  if(r.skipped.includes(k)){r.skipped=r.skipped.filter(x=>x!==k);toast(`${r.name}: Nicht mehr übersprungen.`);}
+  else{r.skipped.push(k);toast(`${r.name}: In ${lbl()} übersprungen.`);}
+  save(true);rRec();
+}
+function bookNow(rid){
+  const r=REC.find(x=>x.id===rid);if(!r)return;
+  if(recAlreadyBooked(r,cy,cm)){toast('Bereits gebucht!');return;}
+  const k=ck();ensure(k);
+  const day=Math.min(r.day,new Date(cy,cm,0).getDate());
+  const date=`${cy}-${String(cm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  D[k].expenses.push({id:Date.now(),date,cat:r.cat,amount:r.amount,pay:r.pay,note:r.note||r.name,recId:r.id,recName:r.name});
+  save();rRec();toast(`${r.name} für ${lbl()} gebucht.`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function goToday(){
+  const now=new Date();
+  cy=now.getFullYear(); cm=now.getMonth()+1;
+  updMon(); refresh();
+  toast('Zurück zu '+lbl());
+}
+
+function step(d){cm+=d;if(cm>12){cm=1;cy++;}if(cm<1){cm=12;cy--;}updMon();refresh();}
+function updMon(){
+  const now=new Date();
+  const isCur=now.getFullYear()===cy&&now.getMonth()+1===cm;
+  const label=MS[cm-1]+' '+cy;
+  const el=document.getElementById('mnlbl-txt');if(el)el.textContent=label;
+  const el2=document.getElementById('mnlbl2');if(el2)el2.textContent=label;
+  const el3=document.getElementById('hamMonLbl');if(el3)el3.textContent=label;
+  // Show/hide "Heute" buttons — only visible when NOT on current month
+  ['todayBtnDesktop','todayBtnMobile','todayBtnHam'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(!btn) return;
+    btn.style.display=isCur?'none':'inline-flex';
+    btn.style.alignItems='center';
+  });
+  const ind=document.getElementById('dind-wrap');
+  if(ind){
+    ind.innerHTML=isCur
+      ?`<div class="ios-notice ios-notice-blue" style="margin-top:8px"><span class="ios-notice-dot"></span><span>Aktueller Monat</span></div>`
+      :`<div class="ios-notice ios-notice-orange" style="margin-top:8px"><span class="ios-notice-dot"></span><span>Archivierter Monat · ${lbl()}</span></div>`;
+  }
+}
+function openPicker(){py=cy;renderPicker();document.getElementById('pickerOverlay').style.display='flex';}
+function closePicker(){document.getElementById('pickerOverlay').style.display='none';}
+function renderPicker(){
+  document.getElementById('pylbl').textContent=py;
+  document.getElementById('mgrid').innerHTML=MN.map((n,i)=>{
+    const m=i+1,k=mk(py,m);
+    const has=D[k]&&(D[k].income.length>0||D[k].expenses.length>0);
+    const sel=py===cy&&m===cm;
+    return `<div class="mcell ${sel?'sel':has?'has':''}" onclick="cy=${py};cm=${m};closePicker();updMon();refresh()">${MS[i]}</div>`;
+  }).join('');
+}
+function go(p){
+  ap=p;
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.ios-tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.desk-tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('pg-'+p).classList.add('active');
+  const idx={dash:0,income:1,expenses:2,overview:3,stats:4,recurring:5,settings:6,help:7}[p]||0;
+  document.querySelectorAll('.ntab')[idx]?.classList.add('active');
+  const bn=document.getElementById('tab-'+p);if(bn)bn.classList.add('active');
+  const dt=document.getElementById('dt-'+p);if(dt)dt.classList.add('active');
+  document.getElementById('mainScroll').scrollTo(0,0);
+  render(p);
+}
+function refresh(){render(ap);}
+function render(p){
+  if(p==='dash')rDash();else if(p==='income')rInc();else if(p==='expenses')rExp();
+  else if(p==='overview')rOv();else if(p==='stats')rStats();else if(p==='recurring')rRec();
+  else if(p==='settings')rSettings();
+  else if(p==='help'){} // static page, nothing to render
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function rDash(){
+  updMon();
+  const booked=autoBookRecurring();
+  const bookedInc=autoBookRecInc();
+  const notice=document.getElementById('rec-auto-notice');
+  const noticeInc=document.getElementById('rec-inc-notice');
+  if(booked.length){notice.style.display='block';notice.className='ios-notice ios-notice-orange';notice.innerHTML=`<span class="ios-notice-dot"></span><span>🔁 <strong>${booked.length} Dauerauftrag${booked.length>1?'äge':''} automatisch eingetragen:</strong> ${booked.join(', ')}</span>`;}
+  else{notice.style.display='none';}
+  if(bookedInc.length){noticeInc.style.display='block';noticeInc.className='ios-notice ios-notice-green';noticeInc.innerHTML=`<span class="ios-notice-dot"></span><span>💰 <strong>${bookedInc.length} Einnahme${bookedInc.length>1?'n':''} eingetragen:</strong> ${bookedInc.join(', ')}</span>`;}
+  else{noticeInc.style.display='none';}
+  const t=ttl(ck());
+  const pct=t.i>0?Math.min(100,Math.round(t.s/t.i*100)):0;
+  document.getElementById('dtitle').textContent=lbl();
+  const bf=document.getElementById('brandFamily');if(bf)bf.textContent=currentFamily?.name||'FamilyBudget';
+  // Status banner
+  const banner=document.getElementById('dstatus-banner');
+  if(banner) banner.innerHTML=t.r>=0
+    ?`<span style="color:var(--ios-green)">●</span> Budget im Plus · ${fmt(t.r)} verfügbar`
+    :`<span style="color:var(--ios-red)">●</span> Budget überschritten · ${fmt(Math.abs(t.r))}`;
+  document.getElementById('scards').innerHTML=`
+    <div class="metric-card"><div class="metric-card-label">Einnahmen</div><div class="metric-card-value mc-green">${fmt(t.i)}</div><div class="metric-card-sub">${md().income.length} Positionen</div><div class="metric-card-icon mc-green-bg">📈</div></div>
+    <div class="metric-card"><div class="metric-card-label">Ausgaben</div><div class="metric-card-value mc-red">${fmt(t.e)}</div><div class="metric-card-sub">${md().expenses.length} Positionen</div><div class="metric-card-icon mc-red-bg">📉</div></div>
+    <div class="metric-card"><div class="metric-card-label">Restbudget</div><div class="metric-card-value ${t.r>=0?'mc-blue':'mc-red'}">${fmt(Math.abs(t.r))}</div><div class="metric-card-sub">${t.r>=0?'verfügbar':'überschritten'}</div><div class="metric-card-icon ${t.r>=0?'mc-blue-bg':'mc-red-bg'}">${t.r>=0?'💙':'⚠️'}</div></div>
+    <div class="metric-card"><div class="metric-card-label">Ersparnisse</div><div class="metric-card-value mc-orange">${fmt(t.s)}</div><div class="metric-card-sub">Sparquote ${pct}%</div><div class="metric-card-icon mc-orange-bg">🏦</div></div>`;
+  document.getElementById('sarc').setAttribute('stroke-dasharray',`${Math.PI*2*40*pct/100} ${Math.PI*2*40}`);
+  document.getElementById('spct').textContent=pct+'%';
+  document.getElementById('sdet').textContent=`${fmt(t.s)} von ${fmt(t.i)} gespart`;
+  const recent=[...md().expenses].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  document.getElementById('recent').innerHTML=recent.length
+    ?recent.map(e=>`<div class="txn-row">
+      <div class="txn-icon" style="background:${catColor(catN(e.cat))}18">${catEmoji(catN(e.cat))||'📦'}</div>
+      <div class="txn-body"><div class="txn-title">${catN(e.cat)}</div><div class="txn-sub">${fd(e.date)}${e.note?' · '+e.note:''}</div></div>
+      <div class="txn-amount mc-red">-${fmt(e.amount)}</div>
+    </div>`).join('')
+    :`<div class="ios-empty"><span class="ios-empty-icon">📭</span><div class="ios-empty-title">Keine Ausgaben</div><div class="ios-empty-sub">für ${lbl()}</div></div>`;
+  const cats={};md().expenses.forEach(e=>{const cn=catN(e.cat);cats[cn]=(cats[cn]||0)+e.amount;});
+  document.getElementById('catprog').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([cat,amt])=>{
+    const p2=t.e>0?Math.round(amt/t.e*100):0;
+    return `<div class="prog-row"><div class="prog-row-header"><span class="prog-emoji">${catEmoji(cat)||'📦'}</span><span class="prog-label">${cat}</span><span class="prog-value">${fmt(amt)}</span></div><div class="prog-track"><div class="prog-fill" style="width:${p2}%;background:${catColor(cat)}"></div></div></div>`;
+  }).join('');
+  const labels=Object.keys(cats),data=Object.values(cats),colors=labels.map(c=>catColor(c));
+  document.getElementById('pieLeg').innerHTML=labels.map((l,i)=>`<span style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--ios-label2)"><span>${catEmoji(l)||'📦'}</span>${l}</span>`).join('');
+  if(pC)pC.destroy();
+  pC=new Chart(document.getElementById('pieC'),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)}`}}}}});
+  if(bC)bC.destroy();
+  bC=new Chart(document.getElementById('barC'),{type:'bar',data:{labels:[lbl()],datasets:[{label:'Einnahmen',data:[t.i],backgroundColor:'#16a34a99',borderRadius:4},{label:'Ausgaben',data:[t.e],backgroundColor:'#dc262699',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'CHF '+(v/1000).toFixed(1)+'k'}}}}});
+  renderPersonSplit(t.r);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EINNAHMEN / AUSGABEN
+// ═══════════════════════════════════════════════════════════
+function rInc(){
+  document.getElementById('ilbl').textContent=lbl();
+  const sel=document.getElementById('ic');
+  if(sel) sel.innerHTML=CATS.inc.map(c=>`<option value="${typeof c==='object'?c.n:c}">${typeof c==='object'?c.e+' '+c.n:c}</option>`).join('');
+  renderRecIncList();
+  const rows=[...md().income].sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('inc-list');
+  if(!rows.length){
+    el.innerHTML=`<div class="ios-empty"><span class="ios-empty-icon">📭</span><div class="ios-empty-title">Keine Einnahmen</div><div class="ios-empty-sub">für ${lbl()}</div></div>`;return;
+  }
+  el.innerHTML=rows.map(e=>`
+    <div class="txn-row">
+      <div class="txn-icon" style="background:${catColor(catN(e.cat))}18">${catEmoji(catN(e.cat))||'💰'}</div>
+      <div class="txn-body">
+        <div class="txn-title" style="color:var(--ios-green)">+ ${fmt(e.amount)}</div>
+        <div class="txn-sub">${catN(e.cat)} · ${fd(e.date)}${e.note?' · '+e.note:''}</div>
+      </div>
+      <div class="txn-actions">
+        <button class="txn-btn txn-edit-btn" onclick="openEditInc(${e.id})">✏️</button>
+        <button class="txn-btn txn-del-btn" onclick="del('i',${e.id})">❌</button>
+      </div>
+    </div>`).join('');
+}
+function setExpFilt(cat){
+  window._expFilt=cat;
+  document.querySelectorAll('#efilt-pills .rec-pill,#efilt-all').forEach(b=>b.classList.remove('rec-pill-blue'));
+  if(!cat) document.getElementById('efilt-all')?.classList.add('rec-pill-blue');
+  rExp();
+}
+function rExp(){
+  document.getElementById('elbl').textContent=lbl();
+  const ec=document.getElementById('ec');
+  const epills=document.getElementById('efilt-pills');
+  if(epills)epills.innerHTML=CATS.exp.map(c=>{const n=typeof c==='object'?c.n:c;const e=typeof c==='object'?c.e:'';return `<button class="rec-pill rec-pill-gray" onclick="setExpFilt('${n}')">${e} ${n}</button>`}).join('');
+  if(ec) ec.innerHTML=CATS.exp.map(c=>`<option value="${typeof c==='object'?c.n:c}">${typeof c==='object'?c.e+' '+c.n:c}</option>`).join('');
+  const epay=document.getElementById('epay');
+  if(epay) epay.innerHTML=CATS.pay.map(p=>`<option>${p}</option>`).join('');
+  const srch=(document.getElementById('esrch')?.value||'').toLowerCase();
+  const filtVal=window._expFilt||'';
+  const rows=[...md().expenses]
+    .filter(e=>(!filtVal||catN(e.cat)===filtVal)&&(!srch||catN(e.cat).toLowerCase().includes(srch)||(e.note||'').toLowerCase().includes(srch)))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  const el=document.getElementById('exp-list');
+  if(!rows.length){
+    el.innerHTML=`<div class="ios-empty"><span class="ios-empty-icon">📭</span><div class="ios-empty-title">Keine Ausgaben</div><div class="ios-empty-sub">für ${lbl()}</div></div>`;return;
+  }
+  el.innerHTML=rows.map(e=>`
+    <div class="txn-row">
+      <div class="txn-icon" style="background:${catColor(catN(e.cat))}18">${catEmoji(catN(e.cat))||'📦'}</div>
+      <div class="txn-body">
+        <div class="txn-title" style="color:var(--ios-red)">- ${fmt(e.amount)}${e.recId?' 🔁':''}</div>
+        <div class="txn-sub">${catN(e.cat)} · ${fd(e.date)}${e.pay?' · '+e.pay:''}${e.recName||e.note?' · '+(e.recName||e.note):''}</div>
+      </div>
+      <div class="txn-actions">
+        <button class="txn-btn txn-edit-btn" onclick="openEditExp(${e.id})">✏️</button>
+        <button class="txn-btn txn-del-btn" onclick="del('e',${e.id})">❌</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// JAHRESÜBERSICHT
+// ═══════════════════════════════════════════════════════════
+function rOv(){
+  const years=[...new Set(Object.keys(D).map(k=>parseInt(k)))].sort((a,b)=>b-a);
+  if(!years.includes(cy))years.unshift(cy);
+  const thisYear=new Date().getFullYear();
+  if(!years.includes(thisYear))years.unshift(thisYear);
+  document.getElementById('ytabs').innerHTML=years.map(y=>`<button class="rec-pill ${y===cy?'rec-pill-blue':'rec-pill-gray'}" onclick="cy=${y};rOv()">${y===thisYear?'📅 '+y:y}</button>`).join('');
+  document.getElementById('ovyrlbl').textContent=cy;
+  const rows=[];let mx=1;
+  for(let m=1;m<=12;m++){const t=ttl(mk(cy,m));mx=Math.max(mx,t.i,t.e);rows.push({m,t});}
+  document.getElementById('ovrows').innerHTML=rows.map(({m,t})=>{
+    const empty=t.i===0&&t.e===0,saldo=t.i-t.e;
+    const isCur=cy===new Date().getFullYear()&&m===new Date().getMonth()+1;
+    const iw=mx>0?Math.round(t.i/mx*100):0,ew=mx>0?Math.round(t.e/mx*100):0;
+    return `<div class="ios-row" style="${isCur?'background:rgba(0,122,255,.06);':''}">
+      <div style="width:36px;font-size:14px;font-weight:${isCur?700:500};color:${isCur?'var(--ios-blue)':'var(--ios-label)'}">${MS[m-1]}</div>
+      <div style="flex:1;margin:0 10px">
+        <div style="background:var(--ios-fill);border-radius:3px;height:4px;position:relative;overflow:hidden;margin-bottom:3px"><div style="position:absolute;left:0;top:0;height:4px;width:${iw}%;background:var(--ios-green);border-radius:3px"></div></div>
+        <div style="background:var(--ios-fill);border-radius:3px;height:4px;position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;height:4px;width:${ew}%;background:var(--ios-red);border-radius:3px"></div></div>
+      </div>
+      <div style="text-align:right;min-width:70px;font-size:14px;font-weight:600;color:${empty?'var(--ios-gray)':saldo>=0?'var(--ios-green)':'var(--ios-red)'}">${empty?'—':(saldo>=0?'+':'')+fmt(saldo)}</div>
+    </div>`;
+  }).join('');
+  if(yrC)yrC.destroy();
+  yrC=new Chart(document.getElementById('yrC'),{type:'bar',data:{labels:MS,datasets:[{label:'Einnahmen',data:rows.map(r=>r.t.i),backgroundColor:'#16a34a88',borderRadius:4},{label:'Ausgaben',data:rows.map(r=>r.t.e),backgroundColor:'#dc262688',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom'}},scales:{x:{ticks:{autoSkip:false,maxRotation:0,font:{size:10}}},y:{beginAtZero:true,ticks:{callback:v=>v===0?'0':'CHF '+(v/1000).toFixed(0)+'k'}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATISTIKEN
+// ═══════════════════════════════════════════════════════════
+function rStats(){
+  document.getElementById('slbl').textContent=cy;document.getElementById('stlbl').textContent=lbl();
+  const sv=[],lb=[];
+  for(let m=1;m<=12;m++){const t=ttl(mk(cy,m));if(t.i>0||t.e>0){sv.push(Math.max(0,t.s));lb.push(MS[m-1]);}}
+  if(sC)sC.destroy();
+  sC=new Chart(document.getElementById('savC'),{type:'line',data:{labels:lb,datasets:[{label:'Gespart',data:sv,borderColor:'#16a34a',backgroundColor:'#16a34a22',fill:true,tension:.4,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'CHF '+v}}}}});
+  const cats={};md().expenses.forEach(e=>{const cn=catN(e.cat);cats[cn]=(cats[cn]||0)+e.amount;});
+  const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const tot=Object.values(cats).reduce((a,b)=>a+b,0)||1;
+  document.getElementById('topcats').innerHTML=sorted.length
+    ?sorted.map(([cat,amt])=>`<div class="prog-row"><div class="prog-row-header"><span class="prog-emoji">${catEmoji(cat)||'📦'}</span><span class="prog-label">${cat}</span><span class="prog-value">${Math.round(amt/tot*100)}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${Math.round(amt/tot*100)}%;background:${catColor(cat)}"></div></div></div>`).join('')
+    :`<div class="ios-empty"><span class="ios-empty-icon">📊</span><div class="ios-empty-sub">Keine Ausgaben für ${lbl()}</div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// DAUERAUFTRÄGE
+// ═══════════════════════════════════════════════════════════
+function rRec(){
+  document.getElementById('rec-month-lbl').textContent=lbl();
+  document.getElementById('rec-month-lbl') && (document.getElementById('rec-month-lbl').textContent=lbl());
+  const today=new Date(),isCurMonth=today.getFullYear()===cy&&today.getMonth()+1===cm,todayDay=today.getDate();
+  const activeRec=REC.filter(r=>r.active&&recDueInMonth(r,cy,cm));
+  const totalMonthly=activeRec.reduce((a,r)=>a+r.amount,0);
+  const booked=activeRec.filter(r=>recAlreadyBooked(r,cy,cm));
+  const pending=activeRec.filter(r=>!recAlreadyBooked(r,cy,cm)&&!(r.skipped||[]).includes(ck()));
+  const rSumEl=document.getElementById('rec-summary-ios');
+  if(rSumEl) rSumEl.innerHTML=`
+    <div style="background:var(--ios-card);border-radius:14px;padding:14px 16px;flex-shrink:0;min-width:130px;text-align:center">
+      <div style="font-size:22px;font-weight:700;color:var(--ios-blue)">${fmt(totalMonthly)}</div>
+      <div style="font-size:12px;color:var(--ios-label2);margin-top:2px">Fällig</div>
+    </div>
+    <div style="background:var(--ios-card);border-radius:14px;padding:14px 16px;flex-shrink:0;min-width:90px;text-align:center">
+      <div style="font-size:22px;font-weight:700;color:var(--ios-green)">${booked.length}</div>
+      <div style="font-size:12px;color:var(--ios-label2);margin-top:2px">Gebucht</div>
+    </div>
+    <div style="background:var(--ios-card);border-radius:14px;padding:14px 16px;flex-shrink:0;min-width:90px;text-align:center">
+      <div style="font-size:22px;font-weight:700;color:var(--ios-orange)">${pending.length}</div>
+      <div style="font-size:12px;color:var(--ios-label2);margin-top:2px">Ausstehend</div>
+    </div>`;
+  if(!REC.length){document.getElementById('rec-list').innerHTML='<div class="empty" style="grid-column:1/-1"><i class="ti ti-repeat"></i>Noch keine Daueraufträge</div>';return;}
+  document.getElementById('rec-list').innerHTML=REC.map(r=>{
+    const due=recDueInMonth(r,cy,cm),alreadyBooked=recAlreadyBooked(r,cy,cm),skipped=(r.skipped||[]).includes(ck());
+    const color=catColor(catN(r.cat)),emoji=catEmoji(catN(r.cat))||'📦';
+    let badge='';
+    if(!r.active)badge=`<span class="due-badge due-done">Pausiert</span>`;
+    else if(!due)badge=`<span class="due-badge due-done">Nicht fällig</span>`;
+    else if(skipped)badge=`<span class="due-badge due-done">Übersprungen</span>`;
+    else if(alreadyBooked)badge=`<span class="due-badge due-ok">✓ Gebucht</span>`;
+    else if(isCurMonth&&todayDay>=r.day)badge=`<span class="due-badge due-late">⚠️ Nicht gebucht</span>`;
+    else if(isCurMonth&&r.day-todayDay<=3)badge=`<span class="due-badge due-warn">Am ${r.day}.</span>`;
+    else badge=`<span class="due-badge due-ok">Am ${r.day}.</span>`;
+    let actions='';
+    if(due&&r.active&&!alreadyBooked&&!skipped){
+      actions+=`<button class="rec-pill rec-pill-green" onclick="bookNow(${r.id})">⚡ Buchen</button>`;
+      actions+=`<button class="rec-pill rec-pill-gray" onclick="skipRec(${r.id})">⏭ Skip</button>`;
+    } else if(skipped){actions+=`<button class="rec-pill rec-pill-orange" onclick="skipRec(${r.id})">↩ Rückgängig</button>`;}
+    actions+=`<button class="rec-pill rec-pill-blue" onclick="openRecModal(${r.id})">✏️</button>`;
+    actions+=`<button class="rec-pill rec-pill-red" onclick="deleteRec(${r.id})">❌</button>`;
+    return `<div class="rec-card" style="opacity:${r.active?1:.5};margin-bottom:2px">
+      <div class="rec-card-icon" style="background:${color}15">${emoji}</div>
+      <div class="rec-card-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div><div class="rec-card-name">${r.name}</div><div class="rec-card-amount" style="color:${color}">-${fmt(r.amount)}</div>
+          <div class="rec-card-meta">${INTERVAL_LABEL[r.interval]} · am ${r.day}.${r.note?' · '+r.note:''}</div></div>
+          <label class="ios-switch"><input type="checkbox" ${r.active?'checked':''} onchange="toggleRec(${r.id},this.checked)"><div class="ios-switch-track"></div><div class="ios-switch-thumb"></div></label>
+        </div>
+        <div style="margin-top:8px">${badge}</div>
+        <div class="rec-card-actions">${actions}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleRec(id,active){const r=REC.find(x=>x.id===id);if(r){r.active=active;save(true);rRec();toast(`${r.name}: ${active?'Aktiviert':'Pausiert'}.`);}}
+function deleteRec(id){
+  const r=REC.find(x=>x.id===id);if(!r)return;
+  if(!confirm(`"${r.name}" wirklich löschen?`))return;
+  REC=REC.filter(x=>x.id!==id);save(true);rRec();toast(`${r.name} gelöscht.`);
+}
+function openRecModal(id){
+  // Populate dynamic categories
+  const rcat=document.getElementById('r-cat');
+  if(rcat) rcat.innerHTML=CATS.exp.map(c=>`<option value="${typeof c==='object'?c.n:c}">${typeof c==='object'?c.e+' '+c.n:c}</option>`).join('');
+  const rpay=document.getElementById('r-pay');
+  if(rpay) rpay.innerHTML=CATS.pay.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('r-edit-id').value=id||'';
+  if(id){
+    const r=REC.find(x=>x.id===id);if(!r)return;
+    document.getElementById('recModalTitle').textContent='Dauerauftrag bearbeiten';
+    document.getElementById('r-name').value=r.name;document.getElementById('r-amount').value=r.amount;
+    document.getElementById('r-cat').value=catN(r.cat);document.getElementById('r-day').value=r.day;
+    document.getElementById('r-pay').value=r.pay;document.getElementById('r-interval').value=r.interval;
+    document.getElementById('r-from').value=r.from;document.getElementById('r-until').value=r.until||'';
+    document.getElementById('r-note').value=r.note||'';
+  } else {
+    document.getElementById('recModalTitle').textContent='Neuer Dauerauftrag';
+    document.getElementById('r-name').value='';document.getElementById('r-amount').value='';
+    document.getElementById('r-cat').value='Miete';document.getElementById('r-day').value='1';
+    document.getElementById('r-pay').value='Banküberweisung';document.getElementById('r-interval').value='monthly';
+    document.getElementById('r-from').value=mk(cy,cm);document.getElementById('r-until').value='';document.getElementById('r-note').value='';
+  }
+  document.getElementById('recOverlay').style.display='flex';
+  setTimeout(()=>document.getElementById('r-name').focus(),100);
+}
+function closeRecModal(){document.getElementById('recOverlay').style.display='none';}
+function saveRec(){
+  const name=document.getElementById('r-name').value.trim();
+  const amount=parseFloat(document.getElementById('r-amount').value);
+  const from=document.getElementById('r-from').value;
+  if(!name){toast('Bitte eine Bezeichnung eingeben.');return;}
+  if(!amount||amount<=0){toast('Bitte einen gültigen Betrag eingeben.');return;}
+  if(!from){toast('Bitte ein Startdatum angeben.');return;}
+  const editId=document.getElementById('r-edit-id').value;
+  const data={name,amount,cat:document.getElementById('r-cat').value,day:parseInt(document.getElementById('r-day').value)||1,pay:document.getElementById('r-pay').value,interval:document.getElementById('r-interval').value,from,until:document.getElementById('r-until').value,note:document.getElementById('r-note').value,active:true};
+  if(editId){const idx=REC.findIndex(x=>x.id==editId);if(idx>=0){REC[idx]={...REC[idx],...data};toast(`${name} aktualisiert.`);}}
+  else{data.id=Date.now();data.skipped=[];REC.push(data);toast(`${name} als Dauerauftrag gespeichert.`);}
+  save(true);closeRecModal();rRec();
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRANSACTIONS
+// ═══════════════════════════════════════════════════════════
+function addTxn(type){
+  const k=ck();ensure(k);
+  if(type==='i'){
+    const amt=parseFloat(document.getElementById('ia').value);
+    if(!amt||amt<=0){toast('Bitte einen gültigen Betrag eingeben.');return;}
+    D[k].income.push({id:Date.now(),date:document.getElementById('idate').value,cat:document.getElementById('ic').value,amount:amt,note:document.getElementById('inote').value});
+    document.getElementById('ia').value='';document.getElementById('inote').value='';
+    tf('iform');save();rInc();toast(`Einnahme für ${lbl()} gespeichert!`);
+  } else {
+    const amt=parseFloat(document.getElementById('ea').value);
+    if(!amt||amt<=0){toast('Bitte einen gültigen Betrag eingeben.');return;}
+    D[k].expenses.push({id:Date.now(),date:document.getElementById('edate').value,cat:document.getElementById('ec').value,amount:amt,pay:document.getElementById('epay').value,note:document.getElementById('enote').value});
+    document.getElementById('ea').value='';document.getElementById('enote').value='';
+    tf('eform');save();rExp();toast(`Ausgabe für ${lbl()} gespeichert!`);
+  }
+}
+function del(type,id){
+  const k=ck();
+  if(type==='i')D[k].income=D[k].income.filter(x=>x.id!==id);
+  else D[k].expenses=D[k].expenses.filter(x=>x.id!==id);
+  save();render(ap);toast('Eintrag gelöscht.');
+}
+function tf(id){
+  const f=document.getElementById(id),open=!f.classList.contains('open');
+  f.style.display=open?'block':'none';f.classList.toggle('open',open);
+  if(open){
+    const d=`${cy}-${String(cm).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+    if(id==='iform')document.getElementById('idate').value=d;
+    if(id==='eform')document.getElementById('edate').value=d;
+  }
+}
+// ═══════════════════════════════════════════════════════════
+// EDIT EINNAHME
+// ═══════════════════════════════════════════════════════════
+function openEditInc(id){
+  const e=md().income.find(x=>x.id===id);if(!e)return;
+  document.getElementById('ei-id').value=id;
+  document.getElementById('ei-date').value=e.date;
+  document.getElementById('ei-amount').value=e.amount;
+  document.getElementById('ei-note').value=e.note||'';
+  const sel=document.getElementById('ei-cat');
+  sel.innerHTML=CATS.inc.map(c=>`<option value="${catN(c)}" ${catN(c)===catN(e.cat)?'selected':''}>${catN(c)}</option>`).join('');
+  document.getElementById('editIncOverlay').style.display='flex';
+}
+function closeEditInc(){document.getElementById('editIncOverlay').style.display='none';}
+function saveEditInc(){
+  const id=parseFloat(document.getElementById('ei-id').value);
+  const amt=parseFloat(document.getElementById('ei-amount').value);
+  if(!amt||amt<=0){toast('Bitte einen gültigen Betrag eingeben.');return;}
+  const k=ck(), entry=D[k]?.income.find(x=>x.id===id);
+  if(!entry){toast('Eintrag nicht gefunden.');return;}
+  entry.date=document.getElementById('ei-date').value;
+  entry.cat=document.getElementById('ei-cat').value;
+  entry.amount=amt;
+  entry.note=document.getElementById('ei-note').value;
+  save();closeEditInc();rInc();toast('Einnahme aktualisiert ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// EDIT AUSGABE
+// ═══════════════════════════════════════════════════════════
+function openEditExp(id){
+  const e=md().expenses.find(x=>x.id===id);if(!e)return;
+  document.getElementById('ee-id').value=id;
+  document.getElementById('ee-date').value=e.date;
+  document.getElementById('ee-amount').value=e.amount;
+  document.getElementById('ee-note').value=e.note||'';
+  const csel=document.getElementById('ee-cat');
+  csel.innerHTML=CATS.exp.map(c=>`<option value="${catN(c)}" ${catN(c)===catN(e.cat)?'selected':''}>${catN(c)}</option>`).join('');
+  const psel=document.getElementById('ee-pay');
+  psel.innerHTML=CATS.pay.map(p=>`<option ${p===e.pay?'selected':''}>${p}</option>`).join('');
+  document.getElementById('editExpOverlay').style.display='flex';
+}
+function closeEditExp(){document.getElementById('editExpOverlay').style.display='none';}
+function saveEditExp(){
+  const id=parseFloat(document.getElementById('ee-id').value);
+  const amt=parseFloat(document.getElementById('ee-amount').value);
+  if(!amt||amt<=0){toast('Bitte einen gültigen Betrag eingeben.');return;}
+  const k=ck(), entry=D[k]?.expenses.find(x=>x.id===id);
+  if(!entry){toast('Eintrag nicht gefunden.');return;}
+  entry.date=document.getElementById('ee-date').value;
+  entry.cat=document.getElementById('ee-cat').value;
+  entry.amount=amt;
+  entry.pay=document.getElementById('ee-pay').value;
+  entry.note=document.getElementById('ee-note').value;
+  save();closeEditExp();rExp();toast('Ausgabe aktualisiert ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// EINSTELLUNGEN / KATEGORIEN
+// ═══════════════════════════════════════════════════════════
+function rSettings(){
+  renderPersonList();
+  renderCatList('expCatList','exp');
+  renderCatList('incCatList','inc');
+  renderCatList('payList','pay');
+  renderEmojiPicker('emojiPickerExp','exp');
+  renderEmojiPicker('emojiPickerInc','inc');
+  const sel=document.getElementById('autoLogoutSelect');
+  if(sel) sel.value=String(getAutoLogoutTime());
+  populateAccountSettings();
+}
+function renderEmojiPicker(elId,type){
+  const el=document.getElementById(elId);if(!el)return;
+  el.innerHTML=ALL_EMOJIS.map(e=>`<button onclick="pickEmoji('${type}','${e}')" style="width:36px;height:36px;border-radius:8px;border:2px solid ${selEmoji[type]===e?'var(--blue)':'transparent'};background:${selEmoji[type]===e?'var(--bbg)':'var(--card)'};cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">${e}</button>`).join('');
+}
+function pickEmoji(type,emoji){
+  selEmoji[type]=emoji;
+  const lbl=document.getElementById(type==='exp'?'selEmojiExp':'selEmojiInc');
+  if(lbl)lbl.textContent=emoji;
+  renderEmojiPicker(type==='exp'?'emojiPickerExp':'emojiPickerInc',type);
+}
+function renderCatList(elId,type){
+  const el=document.getElementById(elId);if(!el)return;
+  const items=CATS[type]||[];
+  if(!items.length){el.innerHTML=`<div style="font-size:12px;color:var(--muted);padding:8px 0;font-style:italic">Keine Einträge</div>`;return;}
+  el.innerHTML=items.map((c,i)=>{
+    const name=typeof c==='object'?c.n:c;
+    const emoji=typeof c==='object'?c.e:'';
+    return `<div class="ios-row">
+      <span style="font-size:20px;flex-shrink:0">${emoji||'📦'}</span>
+      <div class="ios-row-label">${name}</div>
+      <button onclick="deleteCat('${type}',${i})" style="color:var(--ios-red);background:none;border:none;font-size:20px;cursor:pointer">❌</button>
+    </div>`;
+  }).join('');
+}
+function addCat(type){
+  const inputId={exp:'newExpCat',inc:'newIncCat',pay:'newPay'}[type];
+  const input=document.getElementById(inputId);
+  const val=input.value.trim();
+  if(!val){toast('Bitte einen Namen eingeben.');return;}
+  const existing=CATS[type].map(c=>(typeof c==='object'?c.n:c).toLowerCase());
+  if(existing.includes(val.toLowerCase())){toast('Existiert bereits.');return;}
+  if(type==='pay'){CATS[type].push(val);}
+  else{CATS[type].push({n:val,e:selEmoji[type]||'📦'});}
+  input.value='';saveCats();rSettings();toast(`"${val}" hinzugefügt ✓`);
+}
+function deleteCat(type,idx){
+  const item=CATS[type][idx];
+  const name=typeof item==='object'?item.n:item;
+  if(!confirm(`"${name}" wirklich löschen?`))return;
+  CATS[type].splice(idx,1);saveCats();rSettings();toast(`"${name}" gelöscht.`);
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// PERSONEN
+// ═══════════════════════════════════════════════════════════
+function renderPersonList(){
+  const el=document.getElementById('personList');if(!el)return;
+  if(!PERSONS.length){el.innerHTML=`<div style="font-size:12px;color:var(--muted);font-style:italic;padding:8px 0">Noch keine Personen — füge z.B. "Ermir" und "Larissa" hinzu.</div>`;return;}
+  el.innerHTML=PERSONS.map((p,i)=>`
+    <div class="ios-row">
+      <div class="person-avatar" style="background:${AVATAR_COLORS[i%AVATAR_COLORS.length]}22;color:${AVATAR_COLORS[i%AVATAR_COLORS.length]};width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${p[0].toUpperCase()}</div>
+      <div class="ios-row-label">${p}</div>
+      <button onclick="deletePerson(${i})" style="color:var(--ios-red);background:none;border:none;font-size:20px;cursor:pointer">❌</button>
+    </div>`).join('');
+}
+function addPerson(){
+  const input=document.getElementById('newPersonName');
+  const val=input.value.trim();
+  if(!val){toast('Bitte einen Namen eingeben.');return;}
+  if(PERSONS.map(p=>p.toLowerCase()).includes(val.toLowerCase())){toast('Person existiert bereits.');return;}
+  PERSONS.push(val);input.value='';
+  save(true);renderPersonList();rDash();toast(`${val} hinzugefügt ✓`);
+}
+function deletePerson(idx){
+  const name=PERSONS[idx];
+  if(!confirm(`"${name}" wirklich entfernen?`))return;
+  PERSONS.splice(idx,1);save(true);renderPersonList();rDash();toast(`${name} entfernt.`);
+}
+function renderPersonSplit(restBudget){
+  const card=document.getElementById('personSplitCard');
+  const list=document.getElementById('personSplitList');
+  if(!card||!list)return;
+  if(!PERSONS.length){card.style.display='none';return;}
+  card.style.display='block';
+  const perPerson=restBudget/PERSONS.length;
+  const isPos=restBudget>=0;
+  list.innerHTML=PERSONS.map((p,i)=>`
+    <div class="person-row">
+      <div class="person-avatar" style="background:${AVATAR_COLORS[i%AVATAR_COLORS.length]}22;color:${AVATAR_COLORS[i%AVATAR_COLORS.length]}">${p[0].toUpperCase()}</div>
+      <div class="person-name">${p}</div>
+      <div class="person-amount" style="color:${isPos?'var(--ios-green)':'var(--ios-red)'}">${isPos?'+':''}${fmt(perPerson)}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// WIEDERKEHRENDE EINNAHMEN
+// ═══════════════════════════════════════════════════════════
+function recIncDueInMonth(r,y,m){
+  if(!r.active)return false;
+  if(r.from&&mk(y,m)<r.from)return false;
+  if(r.until&&mk(y,m)>r.until)return false;
+  if(r.interval==='monthly')return true;
+  const[fy,fm]=r.from.split('-').map(Number);
+  const diff=(y-fy)*12+(m-fm);
+  if(r.interval==='quarterly')return diff%3===0;
+  if(r.interval==='biannual')return diff%6===0;
+  if(r.interval==='yearly')return diff%12===0;
+  return false;
+}
+function recIncAlreadyBooked(r,y,m){
+  const d=D[mk(y,m)]||{income:[]};
+  return d.income.some(e=>e.recIncId===r.id);
+}
+function autoBookRecInc(){
+  const k=ck();ensure(k);let booked=[];
+  REC_INC.forEach(r=>{
+    if(!r.active)return;
+    if(r.skipped&&r.skipped.includes(k))return;
+    if(!recIncDueInMonth(r,cy,cm))return;
+    if(recIncAlreadyBooked(r,cy,cm))return;
+    const day=Math.min(r.day,new Date(cy,cm,0).getDate());
+    const date=`${cy}-${String(cm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    D[k].income.push({id:Date.now()+Math.random(),date,cat:r.cat,amount:r.amount,note:r.note||r.name,recIncId:r.id,recIncName:r.name});
+    booked.push(r.name);
+  });
+  if(booked.length){save();return booked;}return[];
+}
+function renderRecIncList(){
+  const el=document.getElementById('recIncList');if(!el)return;
+  const card=document.getElementById('recIncSummaryCard');
+  if(!REC_INC.length){if(card)card.style.display='none';return;}
+  if(card)card.style.display='block';
+  el.innerHTML=REC_INC.map(r=>{
+    const due=recIncDueInMonth(r,cy,cm),booked=recIncAlreadyBooked(r,cy,cm);
+    const color=catColor(catN(r.cat)),emoji=catEmoji(catN(r.cat))||'💰';
+    let badge=booked?'<span class="due-badge due-ok">✓ Gebucht</span>':due?'<span class="due-badge due-warn">⏰ Fällig</span>':'<span class="due-badge due-done">Nicht fällig</span>';
+    return `<div class="txn-row">
+      <div class="txn-icon" style="background:${color}18">${emoji}</div>
+      <div class="txn-body">
+        <div class="txn-title">+ ${fmt(r.amount)}</div>
+        <div class="txn-sub">${r.name} · ${INTERVAL_LABEL[r.interval]} · am ${r.day}.</div>
+        <div style="margin-top:4px">${badge}</div>
+      </div>
+      <div class="txn-actions" style="flex-direction:column;gap:2px;align-items:flex-end">
+        ${due&&!booked?`<button class="rec-pill rec-pill-green" style="font-size:11px;padding:4px 8px" onclick="bookRecInc(${r.id})">⚡</button>`:''}
+        <button class="txn-btn txn-edit-btn" onclick="openRecIncModal(${r.id})">✏️</button>
+        <button class="txn-btn txn-del-btn" onclick="deleteRecInc(${r.id})">❌</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function bookRecInc(id){
+  const r=REC_INC.find(x=>x.id===id);if(!r)return;
+  if(recIncAlreadyBooked(r,cy,cm)){toast('Bereits gebucht!');return;}
+  const k=ck();ensure(k);
+  const day=Math.min(r.day,new Date(cy,cm,0).getDate());
+  const date=`${cy}-${String(cm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  D[k].income.push({id:Date.now(),date,cat:r.cat,amount:r.amount,note:r.note||r.name,recIncId:r.id,recIncName:r.name});
+  save();renderRecIncList();rInc();toast(`${r.name} für ${lbl()} gebucht.`);
+}
+function openRecIncModal(id){
+  const ricat=document.getElementById('ri-cat');
+  if(ricat)ricat.innerHTML=CATS.inc.map(c=>`<option value="${typeof c==='object'?c.n:c}">${typeof c==='object'?c.e+' '+c.n:c}</option>`).join('');
+  document.getElementById('ri-edit-id').value=id||'';
+  if(id){
+    const r=REC_INC.find(x=>x.id===id);if(!r)return;
+    document.getElementById('recIncModalTitle').textContent='Einnahme bearbeiten';
+    document.getElementById('ri-name').value=r.name;document.getElementById('ri-amount').value=r.amount;
+    document.getElementById('ri-cat').value=catN(r.cat);document.getElementById('ri-day').value=r.day;
+    document.getElementById('ri-interval').value=r.interval;document.getElementById('ri-from').value=r.from;
+    document.getElementById('ri-until').value=r.until||'';document.getElementById('ri-note').value=r.note||'';
+  } else {
+    document.getElementById('recIncModalTitle').textContent='Neue wiederkehrende Einnahme';
+    document.getElementById('ri-name').value='';document.getElementById('ri-amount').value='';
+    document.getElementById('ri-cat').value=CATS.inc[0]?(typeof CATS.inc[0]==='object'?CATS.inc[0].n:CATS.inc[0]):'Lohn';
+    document.getElementById('ri-day').value='1';document.getElementById('ri-interval').value='monthly';
+    document.getElementById('ri-from').value=mk(cy,cm);document.getElementById('ri-until').value='';document.getElementById('ri-note').value='';
+  }
+  document.getElementById('recIncOverlay').style.display='flex';
+  setTimeout(()=>document.getElementById('ri-name').focus(),100);
+}
+function closeRecIncModal(){document.getElementById('recIncOverlay').style.display='none';}
+function saveRecInc(){
+  const name=document.getElementById('ri-name').value.trim();
+  const amount=parseFloat(document.getElementById('ri-amount').value);
+  const from=document.getElementById('ri-from').value;
+  if(!name){toast('Bitte Bezeichnung eingeben.');return;}
+  if(!amount||amount<=0){toast('Bitte gültigen Betrag eingeben.');return;}
+  if(!from){toast('Bitte Startdatum angeben.');return;}
+  const editId=document.getElementById('ri-edit-id').value;
+  const data={name,amount,cat:document.getElementById('ri-cat').value,day:parseInt(document.getElementById('ri-day').value)||1,interval:document.getElementById('ri-interval').value,from,until:document.getElementById('ri-until').value,note:document.getElementById('ri-note').value,active:true,skipped:[]};
+  if(editId){const idx=REC_INC.findIndex(x=>x.id==editId);if(idx>=0){REC_INC[idx]={...REC_INC[idx],...data};toast(`${name} aktualisiert.`);}}
+  else{data.id=Date.now();REC_INC.push(data);toast(`${name} gespeichert.`);}
+  save(true);closeRecIncModal();renderRecIncList();rInc();
+}
+function deleteRecInc(id){
+  const r=REC_INC.find(x=>x.id===id);if(!r)return;
+  if(!confirm(`"${r.name}" wirklich löschen?`))return;
+  REC_INC=REC_INC.filter(x=>x.id!==id);save(true);renderRecIncList();rInc();toast(`${r.name} gelöscht.`);
+}
+
+
+function exportCSV(){
+  const m=md();
+  const rows=[['Datum','Kategorie','Betrag','Notiz','Typ','Dauerauftrag'],...m.income.map(e=>[e.date,catN(e.cat),e.amount,e.note,'Einnahme','']),...m.expenses.map(e=>[e.date,catN(e.cat),e.amount,e.recName||e.note,'Ausgabe',e.recName?'Ja':''])];
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Budget_${ck()}.csv`;a.click();
+  toast(`CSV für ${lbl()} heruntergeladen.`);
+}
+function toast(msg){const t=document.getElementById('toastEl');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ═══════════════════════════════════════════════════════════
+// INIT — check session on load
+// ═══════════════════════════════════════════════════════════
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){
+    currentUser=session.user;
+    const {data:profile}=await sb.from('profiles').select('*,families(*)').eq('id',session.user.id).single();
+    if(profile){
+      currentProfile=profile;currentFamily=profile.families;
+      await loadAllData();
+      hideSplash();
+      showApp();
     } else {
-      wakeDesired = true;
-      requestWakeLock();
+      hideSplash();
+      document.getElementById('loginScreen').style.display='flex';
+      showFamilySetup();
+    }
+  } else {
+    hideSplash();
+    document.getElementById('loginScreen').style.display='flex';
+  }
+  // Enter key
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&document.getElementById('loginScreen').style.display==='flex'){
+      if(document.getElementById('form-login').style.display!=='none')doLogin();
     }
   });
-
-  // Nach App-Wechsel oder Entsperren muss der Wake Lock neu angefordert werden —
-  // aber nur, wenn der Nutzer ihn aktiv eingeschaltet hatte.
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.visibilityState === 'visible' && wakeDesired && !wakeLock){
-      requestWakeLock();
-    }
-  });
-
-  // Zusätzliche Absicherung, v.a. für iOS-Homescreen-Apps (Standalone-Modus),
-  // wo Wake-Lock-API und Canvas-Stream-Tricks bekanntermaßen unzuverlässig sind:
-  // ein winziges, selbst erzeugtes (schwarzes, 1 Sekunde langes) Video, das
-  // endlos in Schleife "abspielt" — der klassische, robusteste No-Sleep-Trick.
-  // Komplett eigenes Material, keine externe Datei, keine Internetabfrage.
-  const NOSLEEP_VIDEO_BASE64 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMXbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAA+gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAkF0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAA+gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAIAAAACAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAPoAAAAAAABAAAAAAG5bWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAQABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABZG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAASRzdGJsAAAAwHN0c2QAAAAAAAAAAQAAALBhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAIAAgBIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAANmF2Y0MBZAAK/+EAGWdkAAqs2V+IiMBEAAADAAQAAAMACDxIllgBAAZo6+PLIsD9+PgAAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAAAFigAABYoAAAAGHN0dHMAAAAAAAAAAQAAAAEAAEAAAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAABRzdHN6AAAAAAAAAsUAAAABAAAAFHN0Y28AAAAAAAAAAQAAA0cAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjYwLjE2LjEwMAAAAAhmcmVlAAACzW1kYXQAAAKtBgX//6ncRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTY0IHIzMTA4IDMxZTE5ZjkgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDIzIC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MSByZWY9MyBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgzOjB4MTEzIG1lPWhleCBzdWJtZT03IHBzeT0xIHBzeV9yZD0xLjAwOjAuMDAgbWl4ZWRfcmVmPTEgbWVfcmFuZ2U9MTYgY2hyb21hX21lPTEgdHJlbGxpcz0xIDh4OGRjdD0xIGNxbT0wIGRlYWR6b25lPTIxLDExIGZhc3RfcHNraXA9MSBjaHJvbWFfcXBfb2Zmc2V0PS0yIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTMgYl9weXJhbWlkPTIgYl9hZGFwdD0xIGJfYmlhcz0wIGRpcmVjdD0xIHdlaWdodGI9MSBvcGVuX2dvcD0wIHdlaWdodHA9MiBrZXlpbnQ9MjUwIGtleWludF9taW49MSBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTQwIHJjPWNyZiBtYnRyZWU9MSBjcmY9MjMuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAABBliIQAFf/+98nvwKbr29+B';
-
-  function setupNoSleepVideo(){
-    try{
-      const video = document.createElement('video');
-      video.muted = true;
-      video.setAttribute('muted', '');
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      video.setAttribute('loop', '');
-      video.loop = true;
-      video.setAttribute('autoplay', '');
-      video.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;';
-      video.src = NOSLEEP_VIDEO_BASE64;
-      document.body.appendChild(video);
-
-      const tryPlay = ()=> video.play().catch(()=>{});
-      tryPlay();
-      document.addEventListener('click', tryPlay, {passive: true});
-      document.addEventListener('touchstart', tryPlay, {passive: true});
-      document.addEventListener('visibilitychange', ()=>{
-        if(document.visibilityState === 'visible') tryPlay();
-      });
-      // Manche iOS-Versionen pausieren das Video trotz loop-Attribut kurz beim Ende
-      video.addEventListener('ended', tryPlay);
-
-      // "Herzschlag": alle paar Sekunden aktiv nachprüfen und nötigenfalls neu starten —
-      // iOS beendet Video/Wake-Lock im Standalone-Modus manchmal lautlos, ohne ein
-      // 'pause'/'release'-Event zu feuern, das der Code sonst mitbekommen würde.
-      setInterval(()=>{
-        if(video.paused) tryPlay();
-        if(wakeDesired && !wakeLock) requestWakeLock();
-      }, 10000);
-    }catch(err){
-      // Fallback nicht verfügbar — Wake Lock API (falls unterstützt) läuft trotzdem separat weiter
-    }
-  }
-  setupNoSleepVideo();
-
-  // Hintergrundmusik über die eigene Audiodatei (siehe <audio id="bgMusic"> oben im <body>)
-  // Startet standardmäßig AUS und läuft nur, wenn der Button aktiv angeschaltet wird.
-  // Bei jeder Aktivierung beginnt der Track wieder von vorne.
-  const bgMusic = document.getElementById('bgMusic');
-  let musicMuted = true;
-
-  function toggleMusicMute(){
-    musicMuted = !musicMuted;
-    if(musicMuted){
-      bgMusic.pause();
-    } else {
-      bgMusic.currentTime = 0;
-      bgMusic.play().catch(()=>{});
-    }
-    const btn = document.getElementById('musicBtn');
-    if(btn) btn.textContent = musicMuted ? '🔇' : '🔈';
-  }
-
-  document.getElementById('musicBtn').addEventListener('click', toggleMusicMute);
-
-  // Fix for mobile browser dynamic viewport height (address bar show/hide)
-  function setVh(){
-    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
-  }
-  setVh();
-  window.addEventListener('resize', setVh);
-  window.addEventListener('orientationchange', setVh);
-
-  const startLp = { top: 8000, bottom: 8000 };
-  const state = { top: 8000, bottom: 8000 };
-  let selectedStartLp = 8000;
-
-  const lpEl = { top: document.getElementById('lpTop'), bottom: document.getElementById('lpBottom') };
-  const deltaEl = { top: document.getElementById('deltaTop'), bottom: document.getElementById('deltaBottom') };
-  const playerEl = { top: document.getElementById('playerTop'), bottom: document.getElementById('playerBottom') };
-  const barEl = { top: document.getElementById('barTop'), bottom: document.getElementById('barBottom') };
-
-  function render(p){
-    const val = state[p];
-    lpEl[p].textContent = val;
-    lpEl[p].classList.toggle('zero', val <= 0);
-    const pct = Math.max(0, Math.min(100, (val / startLp[p]) * 100));
-    barEl[p].style.width = pct + '%';
-    playerEl[p].classList.toggle('danger', val > 0 && val <= startLp[p] * 0.15);
-  }
-
-  function bump(p, amount){
-    if(!amount) return;
-    state[p] = Math.max(0, state[p] + amount);
-    lpEl[p].classList.remove('hit'); void lpEl[p].offsetWidth; lpEl[p].classList.add('hit');
-    deltaEl[p].textContent = (amount > 0 ? '+' : '') + amount;
-    clearTimeout(deltaEl[p]._t);
-    deltaEl[p]._t = setTimeout(()=>{ deltaEl[p].textContent = '\u00a0'; }, 1400);
-    render(p);
-  }
-
-  document.querySelectorAll('.chip[data-d]').forEach(chip=>{
-    chip.addEventListener('click', ()=>{
-      bump(chip.dataset.p, parseInt(chip.dataset.d, 10));
-    });
-  });
-
-  document.querySelectorAll('.custom-trigger[data-p]').forEach(btn=>{
-    btn.addEventListener('click', ()=> openKeypad(btn.dataset.p));
-  });
-
-  const keypadOverlay = document.getElementById('keypadOverlay');
-  const keypadPanel = document.getElementById('keypadPanel');
-  const keypadTitle = document.getElementById('keypadTitle');
-  const keypadDisplay = document.getElementById('keypadDisplay');
-  let keypadValue = '';
-  let keypadPlayer = null;
-
-  function openKeypad(p){
-    keypadPlayer = p;
-    keypadValue = '';
-    keypadDisplay.textContent = '0';
-    const playerName = document.getElementById(p === 'top' ? 'nameTop' : 'nameBottom').value || (p === 'top' ? 'Spieler 1' : 'Spieler 2');
-    keypadTitle.textContent = 'Eigener Wert — ' + playerName;
-    keypadPanel.classList.toggle('flipped', p === 'top');
-    keypadOverlay.classList.add('show');
-  }
-  function closeKeypad(){
-    keypadOverlay.classList.remove('show');
-    keypadPlayer = null;
-  }
-  document.querySelectorAll('.keypad-key[data-k]').forEach(key=>{
-    key.addEventListener('click', ()=>{
-      if(keypadValue.length >= 6) return;
-      keypadValue += key.dataset.k;
-      keypadDisplay.textContent = keypadValue.replace(/^0+(?=\d)/, '');
-    });
-  });
-  document.getElementById('keypadClear').addEventListener('click', ()=>{
-    keypadValue = '';
-    keypadDisplay.textContent = '0';
-  });
-  document.getElementById('keypadBack').addEventListener('click', ()=>{
-    keypadValue = keypadValue.slice(0, -1);
-    keypadDisplay.textContent = keypadValue === '' ? '0' : keypadValue;
-  });
-  function applyKeypad(sign){
-    const raw = parseInt(keypadValue, 10);
-    if(!isNaN(raw) && raw > 0 && keypadPlayer){
-      bump(keypadPlayer, sign * raw);
-    }
-    closeKeypad();
-  }
-  document.getElementById('keypadPlus').addEventListener('click', ()=> applyKeypad(1));
-  document.getElementById('keypadMinus').addEventListener('click', ()=> applyKeypad(-1));
-  document.getElementById('keypadCancel').addEventListener('click', closeKeypad);
-
-  const overlay = document.getElementById('resetOverlay');
-  document.getElementById('resetBtn').addEventListener('click', ()=> overlay.classList.add('show'));
-  document.getElementById('cancelReset').addEventListener('click', ()=> overlay.classList.remove('show'));
-
-  document.querySelectorAll('#startLpGrid .chip').forEach(chip=>{
-    chip.addEventListener('click', ()=>{
-      document.querySelectorAll('#startLpGrid .chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      selectedStartLp = parseInt(chip.dataset.lp, 10);
-    });
-  });
-
-  document.getElementById('confirmReset').addEventListener('click', ()=>{
-    startLp.top = selectedStartLp; startLp.bottom = selectedStartLp;
-    state.top = selectedStartLp; state.bottom = selectedStartLp;
-    deltaEl.top.textContent = '\u00a0';
-    deltaEl.bottom.textContent = '\u00a0';
-    render('top'); render('bottom');
-    overlay.classList.remove('show');
-  });
-
-  // Würfel
-  const diceFaces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
-  const diceOverlay = document.getElementById('diceOverlay');
-  const diceFaceEl = document.getElementById('diceFace');
-  const diceResultEl = document.getElementById('diceResult');
-  let diceSpin = null;
-
-  function rollDice(){
-    clearInterval(diceSpin);
-    diceResultEl.textContent = '\u00a0';
-    diceFaceEl.classList.add('rolling');
-    let ticks = 0;
-    diceSpin = setInterval(()=>{
-      diceFaceEl.textContent = diceFaces[Math.floor(Math.random()*6)];
-      ticks++;
-      if(ticks > 22){
-        clearInterval(diceSpin);
-        diceFaceEl.classList.remove('rolling');
-        const result = Math.floor(Math.random()*6) + 1;
-        diceFaceEl.textContent = diceFaces[result-1];
-        diceResultEl.textContent = 'Ergebnis: ' + result;
-      }
-    }, 130);
-  }
-
-  document.getElementById('diceBtn').addEventListener('click', ()=>{
-    diceOverlay.classList.add('show');
-    rollDice();
-  });
-  document.getElementById('rollAgain').addEventListener('click', rollDice);
-  document.getElementById('closeDice').addEventListener('click', ()=>{
-    clearInterval(diceSpin);
-    diceOverlay.classList.remove('show');
-  });
-
-  // Münzwurf
-  const coinOverlay = document.getElementById('coinOverlay');
-  const coinEl = document.getElementById('coin');
-  const coinResultEl = document.getElementById('coinResult');
-  let coinRotation = 0;
-
-  function flipCoin(){
-    coinResultEl.textContent = '\u00a0';
-    coinEl.classList.add('flipping');
-    const result = Math.random() < 0.5 ? 'Kopf' : 'Zahl';
-    const spins = 7 + Math.floor(Math.random()*3);
-    const currentMod = ((coinRotation % 360) + 360) % 360;
-    const desiredMod = result === 'Zahl' ? 180 : 0;
-    const diff = ((desiredMod - currentMod) + 360) % 360;
-    coinRotation += spins * 360 + diff;
-    coinEl.style.transform = 'rotateY(' + coinRotation + 'deg)';
-    clearTimeout(coinEl._t);
-    coinEl._t = setTimeout(()=>{
-      coinEl.classList.remove('flipping');
-      coinResultEl.textContent = 'Ergebnis: ' + result;
-    }, 2250);
-  }
-
-  document.getElementById('coinBtn').addEventListener('click', ()=>{
-    coinOverlay.classList.add('show');
-    flipCoin();
-  });
-  document.getElementById('flipAgain').addEventListener('click', flipCoin);
-  document.getElementById('closeCoin').addEventListener('click', ()=>{
-    coinOverlay.classList.remove('show');
-  });
-
-  render('top'); render('bottom');
+})();
 </script>
 </body>
 </html>
