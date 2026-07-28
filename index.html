@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Yu-Gi-Oh Lebenspunktezähler</title>
+<link rel="icon" type="image/png" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#05070d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #05070d;
+    --blue: #2fa8ff;
+    --blue-glow: rgba(47,168,255,0.55);
+    --blue-dim: rgba(47,168,255,0.12);
+    --red: #ff3b4a;
+    --red-glow: rgba(255,59,74,0.55);
+    --red-dim: rgba(255,59,74,0.12);
+    --line: rgba(255,255,255,0.08);
+    --ink: #eaf2ff;
+    --vh: 1vh;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background: #000;
+    font-family:'Rajdhani', sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:calc(var(--vh, 1vh) * 100);
+    width:100vw;
+    overflow:hidden;
+    position:fixed;
+    inset:0;
+  }
+
+  .app{
+    position:relative;
+    width:100%;
+    height:100%;
+    max-width:100%;
+    display:flex;
+    flex-direction:column;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 42px),
+      radial-gradient(900px 500px at 50% 0%, var(--red-dim), transparent 65%),
+      radial-gradient(900px 500px at 50% 100%, var(--blue-dim), transparent 65%),
+      var(--bg);
+  }
+
+  /* On roomy screens (tablets/desktops), present the mat as a contained card rather than edge-to-edge */
+  @media (min-width: 720px) and (min-height: 640px){
+    body{ padding:clamp(16px, 3vw, 40px); }
+    .app{
+      max-width:560px;
+      max-height:900px;
+      margin:auto;
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+    }
+  }
+
+  /* Querformat-Layout (Entwurf): links = Spieler oben, rechts = Spieler unten. Wird per JS
+     gesetzt/entfernt statt über eine reine @media-Regel, damit sich das Layout über den
+     Sperr-Button feststellen lässt und dann nicht mehr der Handy-Drehung folgt. */
+  .app.landscape-layout{ flex-direction:row; }
+  .app.landscape-layout .player.top{ transform:rotate(180deg); }
+  .app.landscape-layout .center-divider{
+    top:0; bottom:0; left:50%; right:auto;
+    width:1px; height:auto;
+    background:linear-gradient(180deg, transparent, rgba(255,255,255,0.5), transparent);
+  }
+  .app.landscape-layout .center-controls{
+    width:auto;
+    max-width:min(16vw, 64px);
+    flex-direction:column;
+  }
+
+  .center-divider{
+    position:absolute;
+    top:50%; left:0; right:0;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    z-index:5;
+  }
+  .center-controls{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    z-index:10;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:clamp(6px, 2vw, 10px);
+    width:min(92vw, 260px);
+  }
+  .icon-btn{
+    width:clamp(44px, 10vw, 56px);
+    height:clamp(44px, 10vw, 56px);
+    clip-path: polygon(20% 0, 100% 0, 100% 80%, 80% 100%, 0 100%, 0 20%);
+    border:1px solid var(--line);
+    background:#0c1018;
+    color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-size:clamp(17px, 4.4vw, 22px);
+    cursor:pointer;
+  }
+  .icon-btn:active{ background:#171d2b; }
+
+  .player{
+    flex:1;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:clamp(6px, 2vh, 14px) clamp(10px, 3vw, 16px);
+    gap:clamp(4px, 1.4vh, 8px);
+    overflow:hidden;
+  }
+  .player.top{ transform:rotate(180deg); }
+  .player::before{
+    content:'';
+    position:absolute; inset:0;
+    opacity:0.9;
+    pointer-events:none;
+    transition:opacity 0.25s ease;
+  }
+  .player.red::before{ background:radial-gradient(700px 320px at 50% 30%, var(--red-dim), transparent 70%); }
+  .player.blue::before{ background:radial-gradient(700px 320px at 50% 70%, var(--blue-dim), transparent 70%); }
+  .player.danger.red::before{ background:radial-gradient(700px 380px at 50% 30%, rgba(255,59,74,0.32), transparent 72%); }
+  .player.danger.blue::before{ background:radial-gradient(700px 380px at 50% 70%, rgba(47,168,255,0.32), transparent 72%); }
+
+  .top-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    z-index:2;
+  }
+  .tag{
+    font-family:'Orbitron', sans-serif;
+    font-size:clamp(8px, 2vw, 10px);
+    letter-spacing:3px;
+    padding:3px 8px;
+    border:1px solid currentColor;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+  }
+  .red .tag{ color:var(--red); }
+  .blue .tag{ color:var(--blue); }
+
+  .name{
+    font-family:'Rajdhani', sans-serif;
+    font-weight:600;
+    font-size:clamp(12px, 3vw, 15px);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:transparent;
+    border:none;
+    text-align:center;
+    width:min(60vw, 150px);
+    outline:none;
+    border-bottom:1px solid transparent;
+    z-index:2;
+  }
+  .name:focus{ border-bottom:1px solid currentColor; }
+  .red .name{ caret-color:var(--red); }
+  .blue .name{ caret-color:var(--blue); }
+
+  .lp-display{
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size:clamp(40px, min(17vw, 15vh), 92px);
+    line-height:1;
+    letter-spacing:2px;
+    color:var(--ink);
+    z-index:2;
+    transition:transform 0.12s ease;
+    white-space:nowrap;
+  }
+  .red .lp-display{ text-shadow: 0 0 22px var(--red-glow); }
+  .blue .lp-display{ text-shadow: 0 0 22px var(--blue-glow); }
+  .lp-display.hit{ transform:scale(1.07); }
+  .lp-display.zero{ color:#ffffff; text-shadow:0 0 30px rgba(255,255,255,0.9); }
+
+  .bar-track{
+    width:min(80vw, 440px);
+    height:clamp(5px, 1vh, 8px);
+    background:#0c0f16;
+    border:1px solid var(--line);
+    clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+    overflow:hidden;
+    z-index:2;
+    flex-shrink:0;
+  }
+  .bar-fill{
+    height:100%;
+    width:100%;
+    transition:width 0.35s ease;
+  }
+  .red .bar-fill{ background:linear-gradient(90deg, #7a0d17, var(--red)); box-shadow:0 0 10px var(--red-glow); }
+  .blue .bar-fill{ background:linear-gradient(90deg, #0a3d6b, var(--blue)); box-shadow:0 0 10px var(--blue-glow); }
+
+  .delta-row{
+    font-family:'Orbitron', sans-serif;
+    font-size:clamp(11px, 2.6vw, 13px);
+    min-height:16px;
+    letter-spacing:1px;
+    z-index:2;
+  }
+  .red .delta-row{ color:var(--red); }
+  .blue .delta-row{ color:var(--blue); }
+
+  .btn-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:clamp(5px, 1.4vw, 8px);
+    width:100%;
+    max-width:420px;
+    z-index:2;
+  }
+  .chip{
+    padding:clamp(6px, 1.6vh, 10px) 0;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    border:1px solid var(--line);
+    background:#0c0f16;
+    color:var(--ink);
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:clamp(11px, 2.8vw, 15px);
+    text-align:center;
+    cursor:pointer;
+  }
+  .red .chip:active{ background:var(--red-dim); border-color:var(--red); }
+  .blue .chip:active{ background:var(--blue-dim); border-color:var(--blue); }
+  .chip.minus{ color:#ffb3ba; }
+  .chip.plus{ color:#b9e2ff; }
+
+  .custom-row{
+    display:flex;
+    gap:clamp(5px, 1.4vw, 8px);
+    width:100%;
+    max-width:420px;
+    margin-top:2px;
+    z-index:2;
+  }
+  .custom-trigger{
+    flex:1;
+    padding:clamp(6px, 1.6vh, 8px) 0;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    border:1px solid var(--line);
+    background:#0c0f16;
+    color:var(--ink);
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:clamp(12px, 2.8vw, 15px);
+    cursor:pointer;
+  }
+  .red .custom-trigger{ border-color:var(--red); color:var(--red); }
+  .blue .custom-trigger{ border-color:var(--blue); color:var(--blue); }
+  .red .custom-trigger:active{ background:var(--red-dim); }
+  .blue .custom-trigger:active{ background:var(--blue-dim); }
+  .custom-btn{
+    padding:clamp(6px, 1.6vh, 8px) clamp(10px, 3vw, 16px);
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink);
+    font-weight:700;
+    cursor:pointer;
+    font-size:clamp(13px, 2.8vw, 16px);
+    font-family:'Rajdhani', sans-serif;
+  }
+
+  /* Very short viewports (landscape phones): trim vertical rhythm and shrink secondary controls */
+  @media (max-height: 460px){
+    .top-row{ display:none; }
+    .name{ font-size:11px; }
+    .lp-display{ font-size:clamp(30px, 11vh, 60px); }
+    .btn-grid{ max-width:360px; }
+    .custom-row{ max-width:360px; }
+  }
+
+  /* Very narrow viewports: keep chips legible by wrapping to a 4-col grid with tighter type (already fluid via clamp) */
+  @media (max-width: 340px){
+    .name{ width:70vw; }
+    .bar-track{ width:88vw; }
+  }
+
+  /* Reset overlay */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(5,7,13,0.94);
+    z-index:50;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .overlay.show{ display:flex; }
+  .panel{
+    background:#0c0f16;
+    border:1px solid var(--line);
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    padding:clamp(18px, 4vw, 24px) clamp(18px, 5vw, 26px);
+    width:min(90vw, 340px);
+    text-align:center;
+  }
+  .panel h2{
+    font-family:'Orbitron', sans-serif;
+    color:var(--ink);
+    font-size:16px;
+    letter-spacing:3px;
+    margin:0 0 16px;
+    text-transform:uppercase;
+  }
+  .start-lp-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .start-lp-grid .chip{ padding:12px 0; font-size:15px; color:var(--ink); }
+  .start-lp-grid .chip.active{ border-color:#fff; color:#fff; background:rgba(255,255,255,0.06); }
+  .panel-actions{ display:flex; gap:10px; }
+  .panel-actions .custom-btn{ flex:1; border-color:var(--line); color:var(--ink); }
+  .panel-actions .confirm{ border-color:var(--blue); color:var(--blue); }
+
+  .dice-3d-wrap{
+    width:140px;
+    height:140px;
+    margin:10px auto 14px;
+    perspective:700px;
+  }
+  .dice-cube{
+    width:100%;
+    height:100%;
+    position:relative;
+    transform-style:preserve-3d;
+    transition:transform 2.3s cubic-bezier(.15,.75,.2,1);
+  }
+  .dice-face{
+    position:absolute;
+    inset:0;
+    width:140px;
+    height:140px;
+    border-radius:16px;
+    background:linear-gradient(145deg, #fbf3d9, #e8d9a0);
+    border:2px solid rgba(0,0,0,0.2);
+    box-shadow:inset 0 0 12px rgba(255,255,255,0.5);
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    grid-template-rows:repeat(3, 1fr);
+    padding:18px;
+    box-sizing:border-box;
+  }
+  .pip{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #4a4238, #1a1610);
+    align-self:center;
+    justify-self:center;
+  }
+  .face-front{ transform: rotateY(0deg) translateZ(70px); }
+  .face-back{ transform: rotateY(180deg) translateZ(70px); }
+  .face-right{ transform: rotateY(90deg) translateZ(70px); }
+  .face-left{ transform: rotateY(-90deg) translateZ(70px); }
+  .face-top{ transform: rotateX(90deg) translateZ(70px); }
+  .face-bottom{ transform: rotateX(-90deg) translateZ(70px); }
+  .tool-result{
+    font-family:'Orbitron', sans-serif;
+    font-size:15px;
+    letter-spacing:2px;
+    color:var(--ink);
+    margin-bottom:16px;
+    min-height:20px;
+    text-transform:uppercase;
+  }
+  .coin-stage{
+    width:110px; height:110px;
+    margin:6px auto 14px;
+    perspective:600px;
+  }
+  .coin-stage.tossing{
+    animation: coinToss 2.3s cubic-bezier(.33,0,.2,1);
+  }
+  @keyframes coinToss{
+    0%{ transform:translateY(0); }
+    45%{ transform:translateY(-85px); }
+    100%{ transform:translateY(0); }
+  }
+  .coin{
+    width:100%; height:100%;
+    position:relative;
+    transform-style:preserve-3d;
+    transition:transform 2.2s cubic-bezier(.15,.75,.2,1), scale 2.2s ease;
+  }
+  .coin.flipping{ scale: 1.15; }
+  .coin-face{
+    position:absolute; inset:0;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    backface-visibility:hidden;
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size:14px;
+    letter-spacing:1px;
+    border:2px solid rgba(255,255,255,0.25);
+  }
+  .coin-front{
+    background:radial-gradient(circle at 32% 30%, var(--red), #7a0d17);
+    color:#fff0f0;
+    box-shadow:inset 0 0 0 6px rgba(255,255,255,0.2), inset 0 0 0 9px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.45);
+    transform:translateZ(8px);
+  }
+  .coin-back{
+    background:radial-gradient(circle at 32% 30%, var(--blue), #0a3d6b);
+    color:#eaf6ff;
+    box-shadow:inset 0 0 0 6px rgba(255,255,255,0.2), inset 0 0 0 9px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.45);
+    transform:rotateX(180deg) translateZ(8px);
+  }
+  .coin-edge{
+    position:absolute;
+    inset:0;
+    transform-style:preserve-3d;
+  }
+  .coin-edge-slice{
+    position:absolute;
+    top:50%; left:50%;
+    background:linear-gradient(90deg, #f0d98a, #a9822f 55%, #7a5c1f);
+    backface-visibility:hidden;
+  }
+  .panel-actions .roll-again{ border-color:#fff; color:#fff; }
+
+  .keypad-panel{ transition:transform 0.25s ease; }
+  .keypad-panel.flipped{ transform:rotate(180deg); }
+  .keypad-display{
+    font-family:'Orbitron', sans-serif;
+    font-size:clamp(28px, 8vw, 40px);
+    font-weight:700;
+    color:#fff;
+    background:#0c0f16;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 0;
+    margin-bottom:14px;
+    letter-spacing:1px;
+  }
+  .keypad-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .keypad-key{
+    padding:14px 0;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#0c0f16;
+    color:#fff;
+    font-family:'Orbitron', sans-serif;
+    font-size:18px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .keypad-key:active{ background:rgba(255,255,255,0.1); }
+
+  .icon-btn.active{ border-color:#54e38e; box-shadow:0 0 10px rgba(84,227,142,0.4); }
+  .icon-btn.error{ border-color:var(--red); box-shadow:0 0 10px rgba(255,59,74,0.4); }
+
+  @media (prefers-reduced-motion: reduce){
+    .lp-display, .bar-fill{ transition:none; }
+  }
+
+  /* Intro splash */
+  #intro{
+    position:fixed; inset:0;
+    z-index:200;
+    background:radial-gradient(900px 700px at 50% 45%, rgba(124,79,214,0.22), transparent 65%), #04050a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    overflow:hidden;
+    cursor:pointer;
+    transition:opacity 0.7s ease, visibility 0.7s ease;
+  }
+  #intro.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+
+  .intro-stage{
+    position:relative;
+    width:min(78vw, 320px);
+    height:min(78vw, 320px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .intro-ring{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,0.18);
+  }
+  .intro-ring.r1{ animation:spin 12s linear infinite; border-color:rgba(255,92,105,0.4); }
+  .intro-ring.r2{ inset:22px; animation:spin 9s linear infinite reverse; border-color:rgba(74,180,255,0.4); border-style:dashed; }
+  .intro-ring.r3{ inset:44px; animation:spin 16s linear infinite; border-color:rgba(255,255,255,0.15); }
+  .intro-glyphs{
+    position:absolute; inset:8px;
+    border-radius:50%;
+    animation:spin 20s linear infinite;
+    opacity:0.7;
+  }
+  .intro-glyphs div{
+    position:absolute;
+    width:5px; height:5px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.55);
+    box-shadow:0 0 6px rgba(255,255,255,0.6);
+  }
+
+  .intro-text{
+    margin-top:26px;
+    text-align:center;
+    z-index:2;
+    opacity:0;
+    animation:textIn 1s ease-out 0.6s forwards;
+  }
+  .intro-title{
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size:clamp(24px, 6vw, 34px);
+    letter-spacing:4px;
+    color:#fff;
+    text-shadow:0 0 18px rgba(255,255,255,0.4);
+  }
+  .intro-sub{
+    font-family:'Rajdhani', sans-serif;
+    font-size:13px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.55);
+    margin-top:6px;
+  }
+  .intro-skip{
+    position:absolute;
+    bottom:26px;
+    font-family:'Rajdhani', sans-serif;
+    font-size:12px;
+    letter-spacing:2px;
+    color:rgba(255,255,255,0.4);
+    text-transform:uppercase;
+  }
+  .intro-bar-track{
+    width:min(60vw, 220px);
+    height:3px;
+    background:rgba(255,255,255,0.12);
+    margin-top:18px;
+    border-radius:2px;
+    overflow:hidden;
+    z-index:2;
+  }
+  .intro-bar-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--red), var(--blue));
+    animation:introBar 3s linear forwards;
+  }
+
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @keyframes monsterIn{ to{ opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes monsterFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+  @keyframes textIn{ to{ opacity:1; } }
+  @keyframes introBar{ from{ width:0%; } to{ width:100%; } }
+
+  @media (prefers-reduced-motion: reduce){
+    .intro-ring, .intro-glyphs, .intro-bar-fill{ animation:none; }
+  }
+</style>
+</head>
+<body>
+<!-- ►► HIER EIGENE AUDIODATEI EINTRAGEN: Pfad in src="..." anpassen ◄◄ -->
+<audio id="bgMusic" src="audio/DEINE-DATEI.mp3" loop preload="auto"></audio>
+<div id="intro">
+  <div class="intro-stage">
+    <div class="intro-ring r1"></div>
+    <div class="intro-ring r2"></div>
+    <div class="intro-ring r3"></div>
+    <div class="intro-glyphs" id="introGlyphs"></div>
+  </div>
+  <div class="intro-text">
+    <div class="intro-title">YU-GI-OH</div>
+    <div class="intro-sub" id="introSub">Lebenspunktezähler</div>
+  </div>
+  <div class="intro-bar-track"><div class="intro-bar-fill"></div></div>
+  <div class="intro-skip">Tippen, um zu überspringen</div>
+</div>
+<div class="app">
+
+
+  <div class="player top red" id="playerTop">
+    <div class="top-row"><span class="tag">Duellant</span></div>
+    <input class="name" id="nameTop" value="Spieler 1" maxlength="16">
+    <div class="lp-display" id="lpTop">8000</div>
+    <div class="bar-track"><div class="bar-fill" id="barTop"></div></div>
+    <div class="delta-row" id="deltaTop">&nbsp;</div>
+    <div class="btn-grid">
+      <div class="chip minus" data-p="top" data-d="-1000">−1000</div>
+      <div class="chip minus" data-p="top" data-d="-500">−500</div>
+      <div class="chip minus" data-p="top" data-d="-100">−100</div>
+      <div class="chip minus" data-p="top" data-d="-50">−50</div>
+      <div class="chip plus" data-p="top" data-d="1000">+1000</div>
+      <div class="chip plus" data-p="top" data-d="500">+500</div>
+      <div class="chip plus" data-p="top" data-d="100">+100</div>
+      <div class="chip plus" data-p="top" data-d="50">+50</div>
+    </div>
+    <div class="custom-row">
+      <button class="custom-trigger" data-p="top">🔢 Eigener Wert</button>
+    </div>
+  </div>
+
+  <div class="center-divider"></div>
+  <div class="center-controls">
+    <div class="icon-btn" id="orientToggleBtn" title="Ausrichtung wechseln">⤢</div>
+    <div class="icon-btn" id="wakeBtn" title="Bildschirm an/aus">☀</div>
+    <div class="icon-btn" id="musicBtn" title="Musik an/aus">🔇</div>
+    <div class="icon-btn" id="diceBtn" title="Würfeln">🎲</div>
+    <div class="icon-btn" id="coinBtn" title="Münzwurf">🪙</div>
+    <div class="icon-btn" id="resetBtn" title="Neues Duell">↺</div>
+  </div>
+
+  <div class="player bottom blue" id="playerBottom">
+    <div class="top-row"><span class="tag">Duellant</span></div>
+    <input class="name" id="nameBottom" value="Spieler 2" maxlength="16">
+    <div class="lp-display" id="lpBottom">8000</div>
+    <div class="bar-track"><div class="bar-fill" id="barBottom"></div></div>
+    <div class="delta-row" id="deltaBottom">&nbsp;</div>
+    <div class="btn-grid">
+      <div class="chip minus" data-p="bottom" data-d="-1000">−1000</div>
+      <div class="chip minus" data-p="bottom" data-d="-500">−500</div>
+      <div class="chip minus" data-p="bottom" data-d="-100">−100</div>
+      <div class="chip minus" data-p="bottom" data-d="-50">−50</div>
+      <div class="chip plus" data-p="bottom" data-d="1000">+1000</div>
+      <div class="chip plus" data-p="bottom" data-d="500">+500</div>
+      <div class="chip plus" data-p="bottom" data-d="100">+100</div>
+      <div class="chip plus" data-p="bottom" data-d="50">+50</div>
+    </div>
+    <div class="custom-row">
+      <button class="custom-trigger" data-p="bottom">🔢 Eigener Wert</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="resetOverlay">
+    <div class="panel">
+      <h2>Neues Duell</h2>
+      <div class="start-lp-grid" id="startLpGrid">
+        <div class="chip active" data-lp="8000">8000</div>
+        <div class="chip" data-lp="4000">4000</div>
+        <div class="chip" data-lp="2000">2000 (Speed)</div>
+        <div class="chip" data-lp="16000">16000</div>
+      </div>
+      <div class="panel-actions">
+        <button class="custom-btn" id="cancelReset">Abbrechen</button>
+        <button class="custom-btn confirm" id="confirmReset">Starten</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay" id="diceOverlay">
+    <div class="panel">
+      <h2>Würfeln</h2>
+      <div class="dice-3d-wrap">
+        <div class="dice-cube" id="diceCube">
+          <div class="dice-face face-front">
+            <span class="pip" style="grid-area:2/2;"></span>
+          </div>
+          <div class="dice-face face-back">
+            <span class="pip" style="grid-area:1/1;"></span>
+            <span class="pip" style="grid-area:2/1;"></span>
+            <span class="pip" style="grid-area:3/1;"></span>
+            <span class="pip" style="grid-area:1/3;"></span>
+            <span class="pip" style="grid-area:2/3;"></span>
+            <span class="pip" style="grid-area:3/3;"></span>
+          </div>
+          <div class="dice-face face-right">
+            <span class="pip" style="grid-area:1/1;"></span>
+            <span class="pip" style="grid-area:3/3;"></span>
+          </div>
+          <div class="dice-face face-left">
+            <span class="pip" style="grid-area:1/1;"></span>
+            <span class="pip" style="grid-area:1/3;"></span>
+            <span class="pip" style="grid-area:2/2;"></span>
+            <span class="pip" style="grid-area:3/1;"></span>
+            <span class="pip" style="grid-area:3/3;"></span>
+          </div>
+          <div class="dice-face face-top">
+            <span class="pip" style="grid-area:1/1;"></span>
+            <span class="pip" style="grid-area:2/2;"></span>
+            <span class="pip" style="grid-area:3/3;"></span>
+          </div>
+          <div class="dice-face face-bottom">
+            <span class="pip" style="grid-area:1/1;"></span>
+            <span class="pip" style="grid-area:1/3;"></span>
+            <span class="pip" style="grid-area:3/1;"></span>
+            <span class="pip" style="grid-area:3/3;"></span>
+          </div>
+        </div>
+      </div>
+      <div class="tool-result" id="diceResult">&nbsp;</div>
+      <div class="panel-actions">
+        <button class="custom-btn" id="closeDice">Schließen</button>
+        <button class="custom-btn roll-again" id="rollAgain">Nochmal würfeln</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="coinOverlay">
+    <div class="panel">
+      <h2>Münzwurf</h2>
+      <div class="coin-stage" id="coinStage">
+        <div class="coin" id="coin">
+          <div class="coin-edge" id="coinEdge"></div>
+          <div class="coin-face coin-front">KOPF</div>
+          <div class="coin-face coin-back">ZAHL</div>
+        </div>
+      </div>
+      <div class="tool-result" id="coinResult">&nbsp;</div>
+      <div class="panel-actions">
+        <button class="custom-btn" id="closeCoin">Schließen</button>
+        <button class="custom-btn roll-again" id="flipAgain">Nochmal werfen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="keypadOverlay">
+    <div class="panel keypad-panel" id="keypadPanel">
+      <h2 id="keypadTitle">Eigener Wert</h2>
+      <div class="keypad-display" id="keypadDisplay">0</div>
+      <div class="keypad-grid">
+        <button class="keypad-key" data-k="1">1</button>
+        <button class="keypad-key" data-k="2">2</button>
+        <button class="keypad-key" data-k="3">3</button>
+        <button class="keypad-key" data-k="4">4</button>
+        <button class="keypad-key" data-k="5">5</button>
+        <button class="keypad-key" data-k="6">6</button>
+        <button class="keypad-key" data-k="7">7</button>
+        <button class="keypad-key" data-k="8">8</button>
+        <button class="keypad-key" data-k="9">9</button>
+        <button class="keypad-key" id="keypadClear">C</button>
+        <button class="keypad-key" data-k="0">0</button>
+        <button class="keypad-key" id="keypadBack">⌫</button>
+      </div>
+      <div class="panel-actions">
+        <button class="custom-btn" id="keypadMinus" style="border-color:var(--red); color:var(--red);">− Abziehen</button>
+        <button class="custom-btn" id="keypadPlus" style="border-color:var(--blue); color:var(--blue);">+ Hinzufügen</button>
+      </div>
+      <div class="panel-actions" style="margin-top:8px;">
+        <button class="custom-btn" id="keypadCancel">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+  // Übersetzung von "Lebenspunktezähler" je nach Gerätesprache
+  const lpCounterTranslations = {
+    de: 'Lebenspunktezähler',
+    en: 'Life Points Counter',
+    fr: 'Compteur de Points de Vie',
+    es: 'Contador de Puntos de Vida',
+    it: 'Contatore Punti Vita',
+    pt: 'Contador de Pontos de Vida',
+    nl: 'Levenspuntenteller',
+    pl: 'Licznik Punktów Życia',
+    tr: 'Yaşam Puanı Sayacı',
+    ru: 'Счётчик очков жизни',
+    ja: 'ライフポイントカウンター',
+    ko: '라이프 포인트 카운터',
+    zh: '生命点数计数器'
+  };
+  (function applyLocalizedLabel(){
+    const rawLang = (navigator.language || 'de').toLowerCase();
+    const shortLang = rawLang.split('-')[0];
+    const label = lpCounterTranslations[shortLang] || lpCounterTranslations.en;
+    const introSubEl = document.getElementById('introSub');
+    if(introSubEl) introSubEl.textContent = label;
+    document.title = 'Yu-Gi-Oh ' + label;
+  })();
+
+  // Intro-Splash: Beschwörungskreis-Punkte erzeugen, nach 3s ausblenden, per Klick überspringbar
+  (function(){
+    const glyphWrap = document.getElementById('introGlyphs');
+    const dotCount = 10;
+    for(let i = 0; i < dotCount; i++){
+      const dot = document.createElement('div');
+      const angle = (i / dotCount) * 2 * Math.PI;
+      const radius = 48; // percent-based via transform below
+      dot.style.left = (50 + Math.cos(angle) * radius) + '%';
+      dot.style.top = (50 + Math.sin(angle) * radius) + '%';
+      glyphWrap.appendChild(dot);
+    }
+
+    const intro = document.getElementById('intro');
+    let dismissed = false;
+    function dismiss(){
+      if(dismissed) return;
+      dismissed = true;
+      intro.classList.add('hide');
+      setTimeout(()=> intro.remove(), 750);
+    }
+    setTimeout(dismiss, 3000);
+    intro.addEventListener('click', dismiss);
+  })();
+
+  // Bildschirm-Sperre verhindern, solange die App aktiv ist — über einen
+  // sichtbaren Button, der eine echte Nutzeraktion auslöst (auf iOS am
+  // zuverlässigsten) und sich auch wieder deaktivieren lässt.
+  let wakeLock = null;
+  let wakeDesired = false; // true = Nutzer hat den Button aktiv angeschaltet
+  const wakeLockSupported = 'wakeLock' in navigator;
+  const wakeBtn = document.getElementById('wakeBtn');
+
+  function setWakeStatus(state, icon){
+    wakeBtn.classList.toggle('active', state === 'active');
+    wakeBtn.classList.toggle('error', state === 'error');
+    wakeBtn.textContent = icon;
+  }
+
+  async function requestWakeLock(){
+    if(!wakeLockSupported){
+      setWakeStatus('error', '⚠');
+      return false;
+    }
+    try{
+      if(wakeLock && !wakeLock.released) return true;
+      wakeLock = await navigator.wakeLock.request('screen');
+      setWakeStatus('active', '☀');
+      wakeLock.addEventListener('release', ()=>{
+        wakeLock = null;
+        if(wakeDesired) setWakeStatus('error', '⚠');
+        else setWakeStatus('', '☀');
+      });
+      return true;
+    }catch(err){
+      wakeLock = null;
+      setWakeStatus('error', '⚠');
+      return false;
+    }
+  }
+
+  async function releaseWakeLock(){
+    if(wakeLock){
+      try{ await wakeLock.release(); }catch(e){}
+      wakeLock = null;
+    }
+    setWakeStatus('', '☀');
+  }
+
+  wakeBtn.addEventListener('click', ()=>{
+    if(wakeDesired){
+      wakeDesired = false;
+      releaseWakeLock();
+    } else {
+      wakeDesired = true;
+      requestWakeLock();
+    }
+  });
+
+  // Nach App-Wechsel oder Entsperren muss der Wake Lock neu angefordert werden —
+  // aber nur, wenn der Nutzer ihn aktiv eingeschaltet hatte.
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'visible' && wakeDesired && !wakeLock){
+      requestWakeLock();
+    }
+  });
+
+  // Zusätzliche Absicherung, v.a. für iOS-Homescreen-Apps (Standalone-Modus),
+  // wo Wake-Lock-API und Canvas-Stream-Tricks bekanntermaßen unzuverlässig sind:
+  // ein winziges, selbst erzeugtes (schwarzes, 1 Sekunde langes) Video, das
+  // endlos in Schleife "abspielt" — der klassische, robusteste No-Sleep-Trick.
+  // Komplett eigenes Material, keine externe Datei, keine Internetabfrage.
+  const NOSLEEP_VIDEO_BASE64 = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAMXbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAA+gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAkF0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAA+gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAIAAAACAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAPoAAAAAAABAAAAAAG5bWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAABAAAAAQABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABZG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAASRzdGJsAAAAwHN0c2QAAAAAAAAAAQAAALBhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAIAAgBIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAANmF2Y0MBZAAK/+EAGWdkAAqs2V+IiMBEAAADAAQAAAMACDxIllgBAAZo6+PLIsD9+PgAAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAAAFigAABYoAAAAGHN0dHMAAAAAAAAAAQAAAAEAAEAAAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAABRzdHN6AAAAAAAAAsUAAAABAAAAFHN0Y28AAAAAAAAAAQAAA0cAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjYwLjE2LjEwMAAAAAhmcmVlAAACzW1kYXQAAAKtBgX//6ncRem95tlIt5Ys2CDZI+7veDI2NCAtIGNvcmUgMTY0IHIzMTA4IDMxZTE5ZjkgLSBILjI2NC9NUEVHLTQgQVZDIGNvZGVjIC0gQ29weWxlZnQgMjAwMy0yMDIzIC0gaHR0cDovL3d3dy52aWRlb2xhbi5vcmcveDI2NC5odG1sIC0gb3B0aW9uczogY2FiYWM9MSByZWY9MyBkZWJsb2NrPTE6MDowIGFuYWx5c2U9MHgzOjB4MTEzIG1lPWhleCBzdWJtZT03IHBzeT0xIHBzeV9yZD0xLjAwOjAuMDAgbWl4ZWRfcmVmPTEgbWVfcmFuZ2U9MTYgY2hyb21hX21lPTEgdHJlbGxpcz0xIDh4OGRjdD0xIGNxbT0wIGRlYWR6b25lPTIxLDExIGZhc3RfcHNraXA9MSBjaHJvbWFfcXBfb2Zmc2V0PS0yIHRocmVhZHM9MSBsb29rYWhlYWRfdGhyZWFkcz0xIHNsaWNlZF90aHJlYWRzPTAgbnI9MCBkZWNpbWF0ZT0xIGludGVybGFjZWQ9MCBibHVyYXlfY29tcGF0PTAgY29uc3RyYWluZWRfaW50cmE9MCBiZnJhbWVzPTMgYl9weXJhbWlkPTIgYl9hZGFwdD0xIGJfYmlhcz0wIGRpcmVjdD0xIHdlaWdodGI9MSBvcGVuX2dvcD0wIHdlaWdodHA9MiBrZXlpbnQ9MjUwIGtleWludF9taW49MSBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTQwIHJjPWNyZiBtYnRyZWU9MSBjcmY9MjMuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAABBliIQAFf/+98nvwKbr29+B';
+
+  function setupNoSleepVideo(){
+    try{
+      const video = document.createElement('video');
+      video.muted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('loop', '');
+      video.loop = true;
+      video.setAttribute('autoplay', '');
+      video.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;';
+      video.src = NOSLEEP_VIDEO_BASE64;
+      document.body.appendChild(video);
+
+      const tryPlay = ()=> video.play().catch(()=>{});
+      tryPlay();
+      document.addEventListener('click', tryPlay, {passive: true});
+      document.addEventListener('touchstart', tryPlay, {passive: true});
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.visibilityState === 'visible') tryPlay();
+      });
+      // Manche iOS-Versionen pausieren das Video trotz loop-Attribut kurz beim Ende
+      video.addEventListener('ended', tryPlay);
+
+      // "Herzschlag": alle paar Sekunden aktiv nachprüfen und nötigenfalls neu starten —
+      // iOS beendet Video/Wake-Lock im Standalone-Modus manchmal lautlos, ohne ein
+      // 'pause'/'release'-Event zu feuern, das der Code sonst mitbekommen würde.
+      setInterval(()=>{
+        if(video.paused) tryPlay();
+        if(wakeDesired && !wakeLock) requestWakeLock();
+      }, 10000);
+    }catch(err){
+      // Fallback nicht verfügbar — Wake Lock API (falls unterstützt) läuft trotzdem separat weiter
+    }
+  }
+  setupNoSleepVideo();
+
+  // Hintergrundmusik über die eigene Audiodatei (siehe <audio id="bgMusic"> oben im <body>)
+  // Startet standardmäßig AUS und läuft nur, wenn der Button aktiv angeschaltet wird.
+  // Bei jeder Aktivierung beginnt der Track wieder von vorne.
+  const bgMusic = document.getElementById('bgMusic');
+  let musicMuted = true;
+
+  function toggleMusicMute(){
+    musicMuted = !musicMuted;
+    if(musicMuted){
+      bgMusic.pause();
+    } else {
+      bgMusic.currentTime = 0;
+      bgMusic.play().catch(()=>{});
+    }
+    const btn = document.getElementById('musicBtn');
+    if(btn) btn.textContent = musicMuted ? '🔇' : '🔈';
+  }
+
+  document.getElementById('musicBtn').addEventListener('click', toggleMusicMute);
+
+  // Fix for mobile browser dynamic viewport height (address bar show/hide)
+  // Ausrichtung manuell umschalten: unabhängig davon, wie das Handy tatsächlich
+  // gehalten wird — der Button entscheidet, nicht die Sensor-Ausrichtung.
+  const appEl = document.querySelector('.app');
+  const orientToggleBtn = document.getElementById('orientToggleBtn');
+
+  orientToggleBtn.addEventListener('click', ()=>{
+    appEl.classList.toggle('landscape-layout');
+  });
+
+  function setVh(){
+    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+  }
+  setVh();
+  window.addEventListener('resize', setVh);
+  window.addEventListener('orientationchange', setVh);
+
+  const startLp = { top: 8000, bottom: 8000 };
+  const state = { top: 8000, bottom: 8000 };
+  let selectedStartLp = 8000;
+
+  const lpEl = { top: document.getElementById('lpTop'), bottom: document.getElementById('lpBottom') };
+  const deltaEl = { top: document.getElementById('deltaTop'), bottom: document.getElementById('deltaBottom') };
+  const playerEl = { top: document.getElementById('playerTop'), bottom: document.getElementById('playerBottom') };
+  const barEl = { top: document.getElementById('barTop'), bottom: document.getElementById('barBottom') };
+
+  function render(p){
+    const val = state[p];
+    lpEl[p].textContent = val;
+    lpEl[p].classList.toggle('zero', val <= 0);
+    const pct = Math.max(0, Math.min(100, (val / startLp[p]) * 100));
+    barEl[p].style.width = pct + '%';
+    playerEl[p].classList.toggle('danger', val > 0 && val <= startLp[p] * 0.15);
+  }
+
+  function bump(p, amount){
+    if(!amount) return;
+    state[p] = Math.max(0, state[p] + amount);
+    lpEl[p].classList.remove('hit'); void lpEl[p].offsetWidth; lpEl[p].classList.add('hit');
+    deltaEl[p].textContent = (amount > 0 ? '+' : '') + amount;
+    clearTimeout(deltaEl[p]._t);
+    deltaEl[p]._t = setTimeout(()=>{ deltaEl[p].textContent = '\u00a0'; }, 1400);
+    render(p);
+  }
+
+  document.querySelectorAll('.chip[data-d]').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      bump(chip.dataset.p, parseInt(chip.dataset.d, 10));
+    });
+  });
+
+  document.querySelectorAll('.custom-trigger[data-p]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openKeypad(btn.dataset.p));
+  });
+
+  const keypadOverlay = document.getElementById('keypadOverlay');
+  const keypadPanel = document.getElementById('keypadPanel');
+  const keypadTitle = document.getElementById('keypadTitle');
+  const keypadDisplay = document.getElementById('keypadDisplay');
+  let keypadValue = '';
+  let keypadPlayer = null;
+
+  function openKeypad(p){
+    keypadPlayer = p;
+    keypadValue = '';
+    keypadDisplay.textContent = '0';
+    const playerName = document.getElementById(p === 'top' ? 'nameTop' : 'nameBottom').value || (p === 'top' ? 'Spieler 1' : 'Spieler 2');
+    keypadTitle.textContent = 'Eigener Wert — ' + playerName;
+    keypadPanel.classList.toggle('flipped', p === 'top');
+    keypadOverlay.classList.add('show');
+  }
+  function closeKeypad(){
+    keypadOverlay.classList.remove('show');
+    keypadPlayer = null;
+  }
+  document.querySelectorAll('.keypad-key[data-k]').forEach(key=>{
+    key.addEventListener('click', ()=>{
+      if(keypadValue.length >= 6) return;
+      keypadValue += key.dataset.k;
+      keypadDisplay.textContent = keypadValue.replace(/^0+(?=\d)/, '');
+    });
+  });
+  document.getElementById('keypadClear').addEventListener('click', ()=>{
+    keypadValue = '';
+    keypadDisplay.textContent = '0';
+  });
+  document.getElementById('keypadBack').addEventListener('click', ()=>{
+    keypadValue = keypadValue.slice(0, -1);
+    keypadDisplay.textContent = keypadValue === '' ? '0' : keypadValue;
+  });
+  function applyKeypad(sign){
+    const raw = parseInt(keypadValue, 10);
+    if(!isNaN(raw) && raw > 0 && keypadPlayer){
+      bump(keypadPlayer, sign * raw);
+    }
+    closeKeypad();
+  }
+  document.getElementById('keypadPlus').addEventListener('click', ()=> applyKeypad(1));
+  document.getElementById('keypadMinus').addEventListener('click', ()=> applyKeypad(-1));
+  document.getElementById('keypadCancel').addEventListener('click', closeKeypad);
+
+  const overlay = document.getElementById('resetOverlay');
+  document.getElementById('resetBtn').addEventListener('click', ()=> overlay.classList.add('show'));
+  document.getElementById('cancelReset').addEventListener('click', ()=> overlay.classList.remove('show'));
+
+  document.querySelectorAll('#startLpGrid .chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('#startLpGrid .chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedStartLp = parseInt(chip.dataset.lp, 10);
+    });
+  });
+
+  document.getElementById('confirmReset').addEventListener('click', ()=>{
+    startLp.top = selectedStartLp; startLp.bottom = selectedStartLp;
+    state.top = selectedStartLp; state.bottom = selectedStartLp;
+    deltaEl.top.textContent = '\u00a0';
+    deltaEl.bottom.textContent = '\u00a0';
+    render('top'); render('bottom');
+    overlay.classList.remove('show');
+  });
+
+  // Würfel
+  const diceOverlay = document.getElementById('diceOverlay');
+  const diceCubeEl = document.getElementById('diceCube');
+  const diceResultEl = document.getElementById('diceResult');
+
+  const FACE_ROTATION = {
+    1: {x: 0,   y: 0},
+    6: {x: 0,   y: 180},
+    2: {x: 0,   y: -90},
+    5: {x: 0,   y: 90},
+    3: {x: -90, y: 0},
+    4: {x: 90,  y: 0}
+  };
+  let diceRotX = 0;
+  let diceRotY = 0;
+
+  function rollDice(){
+    diceResultEl.textContent = '\u00a0';
+    const result = Math.floor(Math.random() * 6) + 1;
+    const target = FACE_ROTATION[result];
+    const spinsX = 2 + Math.floor(Math.random() * 2);
+    const spinsY = 3 + Math.floor(Math.random() * 2);
+    const curXmod = ((diceRotX % 360) + 360) % 360;
+    const curYmod = ((diceRotY % 360) + 360) % 360;
+    const targetXmod = ((target.x % 360) + 360) % 360;
+    const targetYmod = ((target.y % 360) + 360) % 360;
+    const diffX = ((targetXmod - curXmod) + 360) % 360;
+    const diffY = ((targetYmod - curYmod) + 360) % 360;
+    diceRotX += spinsX * 360 + diffX;
+    diceRotY += spinsY * 360 + diffY;
+    diceCubeEl.style.transform = 'rotateX(' + diceRotX + 'deg) rotateY(' + diceRotY + 'deg)';
+    clearTimeout(diceCubeEl._t);
+    diceCubeEl._t = setTimeout(()=>{
+      diceResultEl.textContent = 'Ergebnis: ' + result;
+    }, 2350);
+  }
+
+  document.getElementById('diceBtn').addEventListener('click', ()=>{
+    diceOverlay.classList.add('show');
+    rollDice();
+  });
+  document.getElementById('rollAgain').addEventListener('click', rollDice);
+  document.getElementById('closeDice').addEventListener('click', ()=>{
+    clearTimeout(diceCubeEl._t);
+    diceOverlay.classList.remove('show');
+  });
+
+  // Münzwurf
+  const coinOverlay = document.getElementById('coinOverlay');
+  const coinEl = document.getElementById('coin');
+  const coinStageEl = document.getElementById('coinStage');
+  const coinResultEl = document.getElementById('coinResult');
+  const coinEdgeEl = document.getElementById('coinEdge');
+  let coinRotation = 0;
+
+  (function buildCoinEdge(){
+    const slices = 32;
+    const radius = 55;
+    const thickness = 16;
+    const circumference = 2 * Math.PI * radius;
+    const arcWidth = (circumference / slices) * 1.2;
+    for(let i = 0; i < slices; i++){
+      const theta = i * (360 / slices);
+      const slice = document.createElement('div');
+      slice.className = 'coin-edge-slice';
+      slice.style.width = thickness + 'px';
+      slice.style.height = arcWidth + 'px';
+      slice.style.marginLeft = (-thickness / 2) + 'px';
+      slice.style.marginTop = (-arcWidth / 2) + 'px';
+      slice.style.transform =
+        'rotateZ(' + theta + 'deg) translateX(' + radius + 'px) rotateY(90deg)';
+      coinEdgeEl.appendChild(slice);
+    }
+  })();
+
+  function flipCoin(){
+    coinResultEl.textContent = '\u00a0';
+    coinEl.classList.add('flipping');
+    coinStageEl.classList.remove('tossing');
+    void coinStageEl.offsetWidth;
+    coinStageEl.classList.add('tossing');
+    const result = Math.random() < 0.5 ? 'Kopf' : 'Zahl';
+    const spins = 7 + Math.floor(Math.random()*3);
+    const currentMod = ((coinRotation % 360) + 360) % 360;
+    const desiredMod = result === 'Zahl' ? 180 : 0;
+    const diff = ((desiredMod - currentMod) + 360) % 360;
+    coinRotation += spins * 360 + diff;
+    coinEl.style.transform = 'rotateX(' + coinRotation + 'deg)';
+    clearTimeout(coinEl._t);
+    coinEl._t = setTimeout(()=>{
+      coinEl.classList.remove('flipping');
+      coinResultEl.textContent = 'Ergebnis: ' + result;
+    }, 2250);
+  }
+
+  document.getElementById('coinBtn').addEventListener('click', ()=>{
+    coinOverlay.classList.add('show');
+    flipCoin();
+  });
+  document.getElementById('flipAgain').addEventListener('click', flipCoin);
+  document.getElementById('closeCoin').addEventListener('click', ()=>{
+    coinOverlay.classList.remove('show');
+  });
+
+  render('top'); render('bottom');
+</script>
+</body>
+</html>
