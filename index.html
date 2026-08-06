@@ -589,7 +589,7 @@
 </head>
 <body>
 <!-- ►► HIER EIGENE AUDIODATEI EINTRAGEN: Pfad in src="..." anpassen ◄◄ -->
-<audio id="bgMusic" src="letsduel.mp3" loop preload="auto"></audio>
+<video id="bgMusic" src="audio/letsduel.mp3" loop preload="auto" playsinline webkit-playsinline="true" style="position:fixed; width:1px; height:1px; opacity:0.01; pointer-events:none; top:0; left:0;"></video>
 <div id="intro">
   <div class="intro-stage">
     <div class="intro-ring r1"></div>
@@ -926,7 +926,9 @@
   }
   setupNoSleepVideo();
 
-  // Hintergrundmusik über die eigene Audiodatei (siehe <audio id="bgMusic"> oben im <body>)
+  // Hintergrundmusik über die eigene Audiodatei (siehe <video id="bgMusic"> oben im <body> —
+  // bewusst ein Video-Element statt <audio>, da Safari auf iPhone bei reinen Audio-Elementen
+  // den lautlos-Schalter respektiert und sonst kein Ton rauskommt)
   // Startet standardmäßig AUS und läuft nur, wenn der Button aktiv angeschaltet wird.
   // Bei jeder Aktivierung beginnt der Track wieder von vorne.
   const bgMusic = document.getElementById('bgMusic');
